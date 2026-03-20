@@ -1,5 +1,6 @@
 export function layoutTemplate(projectName: string): string {
-  return `import type { Metadata } from "next";
+  return `import "@schemavaults/theme/globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "${projectName}",

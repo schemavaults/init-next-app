@@ -7,6 +7,8 @@ import { layoutTemplate } from "./templates/layout.tsx.js";
 import { pageTemplate } from "./templates/page.tsx.js";
 import { sqlModuleTemplate } from "./templates/sql-module.js";
 import { exampleMigrationFileTemplate } from "./templates/example-migration-file.js";
+import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
+import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 
 const GITIGNORE = `# dependencies
 /node_modules
@@ -56,6 +58,8 @@ export function scaffold(projectName: string, targetDir: string): void {
     packageJsonTemplate(projectName) + "\n",
   );
   writeFileSync(join(targetDir, "next.config.ts"), nextConfigTemplate());
+  writeFileSync(join(targetDir, "tailwind.config.ts"), tailwindConfigTemplate());
+  writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
   writeFileSync(

@@ -29,6 +29,9 @@ export function packageJsonTemplate(projectName: string): string {
       devDependencies: {
         typescript: versions["typescript"],
         tailwindcss: versions["tailwindcss"],
+        postcss: versions["postcss"],
+        autoprefixer: versions["autoprefixer"],
+        "@schemavaults/theme": versions["@schemavaults/theme"],
         "@types/node": versions["@types/node"],
         "@types/react": versions["@types/react"],
         "@types/react-dom": versions["@types/react-dom"],
