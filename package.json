@@ -24,5 +24,8 @@
   "private": false,
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "commander": "^14.0.3"
   }
 }

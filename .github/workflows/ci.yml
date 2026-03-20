@@ -35,7 +35,7 @@ jobs:
           head -1 dist/index.js | grep -q '#!/usr/bin/env node'
 
       - name: Scaffold a test app
-        run: node dist/index.js test-app
+        run: node dist/index.js test-app --display-name "Test App" --description "A test project"
 
       - name: Assert scaffolded directory structure
         run: |
