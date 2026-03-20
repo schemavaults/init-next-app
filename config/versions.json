@@ -1,0 +1,17 @@
+{
+  "next": "16.1.6",
+  "@schemavaults/ui": "0.14.5",
+  "@schemavaults/theme": "0.25.5",
+  "@schemavaults/dbh": "0.8.7",
+  "@schemavaults/auth-server-sdk": "0.21.10",
+  "@schemavaults/auth-react-provider": "0.10.12",
+  "tailwindcss": "3.4.17",
+  "autoprefixer": "10.4.21",
+  "postcss": "8.5.3",
+  "react": "19.1.0",
+  "react-dom": "19.1.0",
+  "typescript": "5.8.2",
+  "@types/node": "22.13.14",
+  "@types/react": "19.0.12",
+  "@types/react-dom": "19.0.4"
+}
