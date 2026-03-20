@@ -46,7 +46,7 @@ yarn-error.log*
 next-env.d.ts
 `;
 
-export function scaffold(projectName: string, targetDir: string): void {
+export function scaffold(projectName: string, targetDir: string, displayName: string, description: string): void {
   // Create directories
   mkdirSync(join(targetDir, "src", "app"), { recursive: true });
   mkdirSync(join(targetDir, "src", "db", "migrations"), { recursive: true });
@@ -55,7 +55,7 @@ export function scaffold(projectName: string, targetDir: string): void {
   // Write files
   writeFileSync(
     join(targetDir, "package.json"),
-    packageJsonTemplate(projectName) + "\n",
+    packageJsonTemplate(projectName, description) + "\n",
   );
   writeFileSync(join(targetDir, "next.config.ts"), nextConfigTemplate());
   writeFileSync(join(targetDir, "tailwind.config.ts"), tailwindConfigTemplate());
@@ -64,7 +64,7 @@ export function scaffold(projectName: string, targetDir: string): void {
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
   writeFileSync(
     join(targetDir, "src", "app", "layout.tsx"),
-    layoutTemplate(projectName),
+    layoutTemplate(displayName, description),
   );
   writeFileSync(join(targetDir, "src", "app", "page.tsx"), pageTemplate());
   writeFileSync(join(targetDir, "src", "db", "sql.ts"), sqlModuleTemplate());

@@ -1,11 +1,11 @@
 import versions from "../../config/versions.json";
 
-export function packageJsonTemplate(projectName: string): string {
+export function packageJsonTemplate(projectName: string, description: string): string {
   return JSON.stringify(
     {
       name: projectName,
       version: "0.0.1",
-      description: "Created with @schemavaults/init-next-app",
+      description,
       private: true,
       scripts: {
         dev: "bun run auth-codegen && next dev",
