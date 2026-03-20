@@ -25,7 +25,6 @@ export function packageJsonTemplate(projectName: string): string {
         next: versions["next"],
         react: versions["react"],
         "react-dom": versions["react-dom"],
-        d,
       },
       devDependencies: {
         typescript: versions["typescript"],
