@@ -25,13 +25,19 @@ export function packageJsonTemplate(projectName: string): string {
         next: versions["next"],
         react: versions["react"],
         "react-dom": versions["react-dom"],
+        "@schemavaults/theme": versions["@schemavaults/theme"],
+        "@schemavaults/ui": versions["@schemavaults/ui"],
+        "@schemavaults/dbh": versions["@schemavaults/dbh"],
+        "@schemavaults/auth-react-provider":
+          versions["@schemavaults/auth-react-provider"],
+        "@schemavaults/auth-server-sdk":
+          versions["@schemavaults/auth-server-sdk"],
       },
       devDependencies: {
         typescript: versions["typescript"],
         tailwindcss: versions["tailwindcss"],
         postcss: versions["postcss"],
         autoprefixer: versions["autoprefixer"],
-        "@schemavaults/theme": versions["@schemavaults/theme"],
         "@types/node": versions["@types/node"],
         "@types/react": versions["@types/react"],
         "@types/react-dom": versions["@types/react-dom"],

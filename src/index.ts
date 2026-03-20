@@ -38,6 +38,9 @@ async function main() {
   console.log("Installing dependencies...");
   execSync("bun install", { cwd: targetDir, stdio: "inherit" });
 
+  console.log("Running auth codegen...");
+  execSync("bun run auth-codegen", { cwd: targetDir, stdio: "inherit" });
+
   console.log(`
 Done! Your project is ready.
 
