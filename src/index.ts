@@ -25,6 +25,20 @@ async function main() {
     process.exit(1);
   }
 
+  const displayName = await prompt("Display name: ");
+
+  if (!displayName) {
+    console.error("Error: display name is required.");
+    process.exit(1);
+  }
+
+  const description = await prompt("Project description: ");
+
+  if (!description) {
+    console.error("Error: project description is required.");
+    process.exit(1);
+  }
+
   const targetDir = resolve(process.cwd(), projectName);
 
   if (existsSync(targetDir)) {
@@ -33,7 +47,7 @@ async function main() {
   }
 
   console.log(`\nCreating ${projectName}...`);
-  scaffold(projectName, targetDir);
+  scaffold(projectName, targetDir, displayName, description);
 
   console.log("Installing dependencies...");
   execSync("bun install", { cwd: targetDir, stdio: "inherit" });

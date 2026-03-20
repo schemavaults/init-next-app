@@ -1,10 +1,10 @@
-export function layoutTemplate(projectName: string): string {
+export function layoutTemplate(displayName: string, description: string): string {
   return `import "@schemavaults/theme/globals.css";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "${projectName}",
-  description: "Created with @schemavaults/init-next-app",
+  title: "${displayName}",
+  description: "${description}",
 };
 
 export default function RootLayout({
