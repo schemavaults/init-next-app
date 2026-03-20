@@ -1,8 +1,12 @@
 {
   "name": "@schemavaults/init-next-app",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "type": "module",
   "module": "./dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/schemavaults/init-next-app.git"
+  },
   "bin": {
     "init-next-app": "./dist/index.js"
   },
