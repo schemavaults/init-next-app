@@ -1,6 +1,6 @@
 {
   "name": "@schemavaults/init-next-app",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "type": "module",
   "module": "./dist/index.js",
   "repository": {
@@ -16,6 +16,7 @@
   "scripts": {
     "build": "bun build src/index.ts --outdir dist --target node --format esm --banner '#!/usr/bin/env node'",
     "dev": "bun build src/index.ts --outdir dist --target node --format esm --banner '#!/usr/bin/env node' --watch",
+    "test": "bash ./scripts/test.sh",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
