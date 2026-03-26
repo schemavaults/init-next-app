@@ -5,3 +5,5 @@ export { sql };
 export default sql;
 `;
 }
+
+export default sqlModuleTemplate;

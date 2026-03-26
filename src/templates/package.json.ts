@@ -1,6 +1,9 @@
 import versions from "../../config/versions.json";
 
-export function packageJsonTemplate(projectName: string, description: string): string {
+export function packageJsonTemplate(
+  projectName: string,
+  description: string,
+): string {
   return JSON.stringify(
     {
       name: projectName,
@@ -33,6 +36,7 @@ export function packageJsonTemplate(projectName: string, description: string): s
           versions["@schemavaults/auth-react-provider"],
         "@schemavaults/auth-server-sdk":
           versions["@schemavaults/auth-server-sdk"],
+        "server-only": versions["server-only"],
       },
       devDependencies: {
         typescript: versions["typescript"],

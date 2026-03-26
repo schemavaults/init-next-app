@@ -13,5 +13,6 @@
   "typescript": "5.8.2",
   "@types/node": "22.13.14",
   "@types/react": "19.0.12",
-  "@types/react-dom": "19.0.4"
+  "@types/react-dom": "19.0.4",
+  "server-only": "0.0.1"
 }
