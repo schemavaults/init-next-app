@@ -11,6 +11,10 @@ import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 import { clientGlobalProvidersTemplate } from "./templates/client-global-providers.tsx.js";
 import { exampleEnvTemplate } from "./templates/env.example.js";
 
+// route guard templates
+import withAuthenticatedApiRouteGuardTemplate from "./templates/route_guards/withAuthenticatedApiRouteGuard.js";
+import withAuthenticatedServerComponentRouteGuardTemplate from "./templates/route_guards/withAuthenticatedServerComponentRouteGuard.js";
+
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
 import { exampleMigrationFileTemplate } from "./templates/db/example-migration-file.js";
@@ -71,6 +75,7 @@ export function scaffold(
   mkdirSync(join(targetDir, "src", "app"), { recursive: true });
   mkdirSync(join(targetDir, "src", "app", "home"), { recursive: true });
   mkdirSync(join(targetDir, "src", "db", "migrations"), { recursive: true });
+  mkdirSync(join(targetDir, "src", "lib"), { recursive: true });
   mkdirSync(join(targetDir, "public"), { recursive: true });
 
   // Write files
@@ -117,5 +122,20 @@ export function scaffold(
   writeFileSync(
     join(targetDir, "src", "db", "serverless-database.ts"),
     serverlessDatabaseTemplate(),
+  );
+
+  // route guard templates
+  writeFileSync(
+    join(targetDir, "src", "lib", "withAuthenticatedApiRouteGuard.ts"),
+    withAuthenticatedApiRouteGuardTemplate(),
+  );
+  writeFileSync(
+    join(
+      targetDir,
+      "src",
+      "lib",
+      "withAuthenticatedServerComponentRouteGuard.ts",
+    ),
+    withAuthenticatedServerComponentRouteGuardTemplate(),
   );
 }
