@@ -9,6 +9,7 @@ import { exampleAuthenticatedHomepageTemplate } from "./templates/example_authen
 import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 import { clientGlobalProvidersTemplate } from "./templates/client-global-providers.tsx.js";
+import { exampleEnvTemplate } from "./templates/env.example.js";
 
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
@@ -46,10 +47,18 @@ yarn-error.log*
 
 # env files
 .env*.local
+.env
+.env.development
+.env.test
+.env.staging
+.env.production
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# ignore auth-codegen'd files
+src/app/auth/
 `;
 
 export function scaffold(
@@ -74,6 +83,7 @@ export function scaffold(
     join(targetDir, "tailwind.config.ts"),
     tailwindConfigTemplate(),
   );
+  writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate());
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);

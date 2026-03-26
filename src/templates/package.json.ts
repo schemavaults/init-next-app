@@ -13,6 +13,7 @@ export function packageJsonTemplate(
       scripts: {
         dev: "bun run auth-codegen && next dev",
         build: "bun run auth-codegen && next build",
+        typecheck: "bun run auth-codegen && tsc --noEmit",
         "build:migrations":
           "bunx @schemavaults/dbh build-db-migrations ./src/db/migrations --outdir ./dist/migrations --sql-module ./src/db/sql.ts --sql-outdir ./dist/",
         "migrate:development":

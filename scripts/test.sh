@@ -37,9 +37,21 @@ grep -q '"next"' test-app/package.json
 grep -q '"react"' test-app/package.json
 grep -q '"typescript"' test-app/package.json
 
-echo "==> Asserting scaffolded app compiles with TypeScript"
+echo "==> Asserting scaffolded app compiles types"
 cd test-app
 bun install
-bunx tsc --noEmit
+bun run typecheck
+
+echo "==> Writing minimal environment variables to get scaffolded app building"
+cat >.env.production <<EOL
+SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"
+SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"
+SCHEMAVAULTS_APP_ENVIRONMENT="production"
+EOL
+
+echo "==> Asserting scaffolded app builds"
+
+bun run build
+bun run build:migrations
 
 echo "==> All tests passed"
