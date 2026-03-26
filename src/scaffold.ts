@@ -91,14 +91,17 @@ export function scaffold(
     join(targetDir, "src", "app", "layout.tsx"),
     layoutTemplate(displayName, description),
   );
-  writeFileSync(join(targetDir, "src", "app", "page.tsx"), pageTemplate());
+  writeFileSync(
+    join(targetDir, "src", "app", "page.tsx"),
+    pageTemplate(displayName),
+  );
   writeFileSync(
     join(targetDir, "src", "app", "client-global-providers.tsx"),
     clientGlobalProvidersTemplate(),
   );
   writeFileSync(
     join(targetDir, "src", "app", "home", "page.tsx"),
-    exampleAuthenticatedHomepageTemplate(),
+    exampleAuthenticatedHomepageTemplate(displayName),
   );
 
   // db file scaffolding
