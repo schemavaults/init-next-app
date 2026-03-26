@@ -3,6 +3,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+if [ -d test-app ]; then
+  echo "==> Cleaning up existing test-app directory"
+  rm -rf test-app
+fi
+
 echo "==> Installing dependencies"
 bun install
 
@@ -14,7 +19,6 @@ test -f dist/index.js
 head -1 dist/index.js | grep -q '#!/usr/bin/env node'
 
 echo "==> Scaffolding test app"
-rm -rf test-app
 node dist/index.js test-app --display-name "Test App" --description "A test project"
 
 echo "==> Asserting scaffolded directory structure"
