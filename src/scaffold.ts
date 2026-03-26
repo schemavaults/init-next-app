@@ -86,6 +86,10 @@ export function scaffold(
     join(targetDir, "src", "app", "client-global-providers.tsx"),
     clientGlobalProvidersTemplate(),
   );
+  writeFileSync(
+    join(targetDir, "src", "app", "home", "page.tsx"),
+    exampleAuthenticatedHomepageTemplate(),
+  );
 
   // db file scaffolding
   writeFileSync(join(targetDir, "src", "db", "sql.ts"), sqlModuleTemplate());

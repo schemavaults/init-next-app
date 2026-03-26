@@ -3,6 +3,11 @@ export function clientGlobalProvidersTemplate(): string {
 import type { PropsWithChildren } from "react";
 import AuthProvider from "./auth/auth-provider";
 import { Toaster } from "@schemavaults/ui";
+import type {
+  ApiServerId,
+  AppId,
+  SchemaVaultsAppEnvironment,
+} from "@schemavaults/auth-react-provider";
 
 export interface ClientLayoutProps extends PropsWithChildren {
   client_app_id: AppId;
