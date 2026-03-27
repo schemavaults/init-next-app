@@ -25,7 +25,7 @@ export function packageJsonTemplate(
           "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment production --env-file .env.production",
         "auth-codegen": "bunx @schemavaults/auth-server-sdk codegen",
         start: "next start",
-        lint: "next lint",
+        lint: "NEXT_TELEMETRY_DISABLED=1 next typegen && eslint src --ext .ts,.tsx",
       },
       dependencies: {
         next: versions["next"],
@@ -48,6 +48,13 @@ export function packageJsonTemplate(
         "@types/node": versions["@types/node"],
         "@types/react": versions["@types/react"],
         "@types/react-dom": versions["@types/react-dom"],
+        eslint: versions["eslint"],
+        "@eslint/js": versions["@eslint/js"],
+        globals: versions["globals"],
+        "@typescript-eslint/eslint-plugin":
+          versions["@typescript-eslint/eslint-plugin"],
+        "@typescript-eslint/parser": versions["@typescript-eslint/parser"],
+        "eslint-config-next": versions["next"],
       },
     },
     null,
