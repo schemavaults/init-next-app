@@ -10,6 +10,7 @@ export function packageJsonTemplate(
       version: "0.0.1",
       description,
       private: true,
+      type: "module",
       scripts: {
         dev: "bun run auth-codegen && next dev",
         build: "bun run auth-codegen && next build",
