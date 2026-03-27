@@ -7,6 +7,7 @@ export function exampleEnvTemplate(): string {
 SCHEMAVAULTS_CLIENT_APP_ID="${fakeUuid}"
 SCHEMAVAULTS_API_SERVER_ID="${fakeUuid}"
 SCHEMAVAULTS_APP_ENVIRONMENT="production"
+SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY=""
 
 # Database Credentials
 POSTGRES_URL=""
