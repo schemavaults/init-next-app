@@ -10,6 +10,7 @@ import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 import { clientGlobalProvidersTemplate } from "./templates/client-global-providers.tsx.js";
 import { exampleEnvTemplate } from "./templates/env.example.js";
+import { readmeTemplate } from "./templates/readme.md.js";
 
 // route guard templates
 import withAuthenticatedApiRouteGuardTemplate from "./templates/route_guards/withAuthenticatedApiRouteGuard.js";
@@ -92,6 +93,7 @@ export function scaffold(
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
+  writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
   writeFileSync(
     join(targetDir, "src", "app", "layout.tsx"),
     layoutTemplate(displayName, description),
