@@ -17,11 +17,11 @@ export function packageJsonTemplate(
         "build:migrations":
           "bunx @schemavaults/dbh build-db-migrations ./src/db/migrations --outdir ./dist/migrations --sql-module ./src/db/sql.ts --sql-outdir ./dist/",
         "migrate:development":
-          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment development",
+          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment development --env-file .env.development",
         "migrate:test":
-          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment test",
+          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment test --env-file .env.test",
         "migrate:production":
-          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment production",
+          "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment production --env-file .env.production",
         "auth-codegen": "bunx @schemavaults/auth-server-sdk codegen",
         start: "next start",
         lint: "next lint",
