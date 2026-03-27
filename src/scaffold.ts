@@ -11,6 +11,7 @@ import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 import { clientGlobalProvidersTemplate } from "./templates/client-global-providers.tsx.js";
 import { exampleEnvTemplate } from "./templates/env.example.js";
 import { readmeTemplate } from "./templates/readme.md.js";
+import { eslintConfigTemplate } from "./templates/eslint.config.cjs.js";
 
 // route guard templates
 import withAuthenticatedApiRouteGuardTemplate from "./templates/route_guards/withAuthenticatedApiRouteGuard.js";
@@ -111,6 +112,7 @@ export function scaffold(
     join(targetDir, "src", "app", "home", "page.tsx"),
     exampleAuthenticatedHomepageTemplate(displayName),
   );
+  writeFileSync(join(targetDir, "eslint.config.cjs"), eslintConfigTemplate());
 
   // db file scaffolding
   writeFileSync(join(targetDir, "src", "db", "sql.ts"), sqlModuleTemplate());

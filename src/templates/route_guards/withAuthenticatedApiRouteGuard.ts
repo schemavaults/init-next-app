@@ -7,7 +7,6 @@ import {
   type IBaseProtectedAuthenticatedApiRouteInputs,
 } from "@schemavaults/auth-server-sdk/route_guards";
 import { ServerlessDatabase } from "@/db/serverless-database";
-import type { ApiServerId } from "@schemavaults/app-definitions";
 
 import { type NextRequest, NextResponse } from "next/server";
 

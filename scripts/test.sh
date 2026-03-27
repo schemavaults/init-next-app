@@ -46,6 +46,9 @@ cd test-app
 bun install
 bun run typecheck
 
+echo "==> Asserting scaffolded app passes eslint checks"
+bun run lint
+
 echo "==> Writing minimal environment variables to get scaffolded app building"
 cat >.env.production <<EOL
 SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"
