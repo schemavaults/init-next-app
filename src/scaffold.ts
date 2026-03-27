@@ -39,6 +39,7 @@ const GITIGNORE = `# dependencies
 
 # production
 /build
+/dist
 
 # misc
 .DS_Store
