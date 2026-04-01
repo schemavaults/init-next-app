@@ -17,6 +17,11 @@ import { eslintConfigTemplate } from "./templates/eslint.config.cjs.js";
 import withAuthenticatedApiRouteGuardTemplate from "./templates/route_guards/withAuthenticatedApiRouteGuard.js";
 import withAuthenticatedServerComponentRouteGuardTemplate from "./templates/route_guards/withAuthenticatedServerComponentRouteGuard.js";
 
+// docker templates
+import { dockerfileTemplate } from "./templates/dockerfile.js";
+import { dockerComposeTemplate } from "./templates/docker-compose.yml.js";
+import { dockerignoreTemplate } from "./templates/dockerignore.js";
+
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
 import { exampleMigrationFileTemplate } from "./templates/db/example-migration-file.js";
@@ -95,6 +100,12 @@ export function scaffold(
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
+  writeFileSync(join(targetDir, ".dockerignore"), dockerignoreTemplate());
+  writeFileSync(join(targetDir, "Dockerfile"), dockerfileTemplate());
+  writeFileSync(
+    join(targetDir, "docker-compose.yml"),
+    dockerComposeTemplate(projectName),
+  );
   writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
   writeFileSync(
     join(targetDir, "src", "app", "layout.tsx"),

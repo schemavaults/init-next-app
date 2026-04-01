@@ -34,6 +34,14 @@ test -f test-app/src/db/migrations/00000-example-migration.ts
 test -f test-app/tailwind.config.ts
 test -f test-app/postcss.config.cjs
 test -d test-app/public
+test -f test-app/Dockerfile
+test -f test-app/docker-compose.yml
+test -f test-app/.dockerignore
+
+echo "==> Asserting scaffolded Docker files"
+grep -q 'postgres-ws-proxy' test-app/docker-compose.yml
+grep -q 'postgres:17-alpine' test-app/docker-compose.yml
+grep -q 'WORKDIR' test-app/Dockerfile
 
 echo "==> Asserting scaffolded package.json content"
 grep -q '"name": "test-app"' test-app/package.json
