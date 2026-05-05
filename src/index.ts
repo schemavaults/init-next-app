@@ -62,7 +62,7 @@ const program = new Command()
       }
 
       console.log(`\nCreating ${projectName}...`);
-      scaffold(projectName, targetDir, displayName, description);
+      await scaffold(projectName, targetDir, displayName, description);
 
       console.log("Installing dependencies...");
       execSync("bun install", { cwd: targetDir, stdio: "inherit" });

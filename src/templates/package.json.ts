@@ -3,6 +3,7 @@ import versions from "../../config/versions.json";
 export function packageJsonTemplate(
   projectName: string,
   description: string,
+  schemavaultsVersions: Record<string, string>,
 ): string {
   return JSON.stringify(
     {
@@ -31,13 +32,13 @@ export function packageJsonTemplate(
         next: versions["next"],
         react: versions["react"],
         "react-dom": versions["react-dom"],
-        "@schemavaults/theme": versions["@schemavaults/theme"],
-        "@schemavaults/ui": versions["@schemavaults/ui"],
-        "@schemavaults/dbh": versions["@schemavaults/dbh"],
+        "@schemavaults/theme": schemavaultsVersions["@schemavaults/theme"],
+        "@schemavaults/ui": schemavaultsVersions["@schemavaults/ui"],
+        "@schemavaults/dbh": schemavaultsVersions["@schemavaults/dbh"],
         "@schemavaults/auth-react-provider":
-          versions["@schemavaults/auth-react-provider"],
+          schemavaultsVersions["@schemavaults/auth-react-provider"],
         "@schemavaults/auth-server-sdk":
-          versions["@schemavaults/auth-server-sdk"],
+          schemavaultsVersions["@schemavaults/auth-server-sdk"],
         "server-only": versions["server-only"],
       },
       devDependencies: {
