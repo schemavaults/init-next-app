@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
+import { fetchSchemavaultsVersions } from "./npm-versions.js";
 import { packageJsonTemplate } from "./templates/package.json.js";
 import { nextConfigTemplate } from "./templates/next-config.js";
 import { tsconfigTemplate } from "./templates/tsconfig.json.js";
@@ -68,12 +69,15 @@ next-env.d.ts
 src/app/auth/
 `;
 
-export function scaffold(
+export async function scaffold(
   projectName: string,
   targetDir: string,
   displayName: string,
   description: string,
-): void {
+): Promise<void> {
+  console.log("Fetching latest @schemavaults/* package versions...");
+  const schemavaultsVersions = await fetchSchemavaultsVersions();
+
   // Create directories
   mkdirSync(join(targetDir, "src", "app"), { recursive: true });
   mkdirSync(join(targetDir, "src", "app", "home"), { recursive: true });
@@ -84,7 +88,7 @@ export function scaffold(
   // Write files
   writeFileSync(
     join(targetDir, "package.json"),
-    packageJsonTemplate(projectName, description) + "\n",
+    packageJsonTemplate(projectName, description, schemavaultsVersions) + "\n",
   );
   writeFileSync(join(targetDir, "next.config.ts"), nextConfigTemplate());
   writeFileSync(
