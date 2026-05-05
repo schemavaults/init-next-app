@@ -8,6 +8,11 @@ const SCHEMAVAULTS_PACKAGES = [
   "@schemavaults/auth-react-provider",
 ] as const;
 
+type SchemaVaultsPackageDependency = (typeof SCHEMAVAULTS_PACKAGES)[number];
+
+const SCHEMAVAULTS_PACKAGE_DEPENDENCIES =
+  new Set<SchemaVaultsPackageDependency>(SCHEMAVAULTS_PACKAGES);
+
 const SEMVER_RE =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;
 
@@ -25,7 +30,8 @@ async function fetchLatestVersionOnce(pkg: string): Promise<string> {
   }
   if (!res.ok) {
     const msg = `Failed to fetch latest version for ${pkg}: HTTP ${res.status} ${res.statusText}`;
-    if (res.status >= 400 && res.status < 500) throw new TerminalFetchError(msg);
+    if (res.status >= 400 && res.status < 500)
+      throw new TerminalFetchError(msg);
     throw new Error(msg);
   }
   const body = (await res.json()) as { version?: unknown };
@@ -56,12 +62,38 @@ async function fetchLatestVersion(pkg: string): Promise<string> {
 }
 
 export async function fetchSchemavaultsVersions(): Promise<
-  Record<string, string>
+  Record<SchemaVaultsPackageDependency, string>
 > {
   const entries = await Promise.all(
     SCHEMAVAULTS_PACKAGES.map(
       async (pkg) => [pkg, await fetchLatestVersion(pkg)] as const,
     ),
   );
-  return Object.fromEntries(entries);
+  const output = Object.fromEntries(entries);
+
+  // assert shape
+  for (const [key, value] of Object.entries(output)) {
+    if (
+      !SCHEMAVAULTS_PACKAGE_DEPENDENCIES.has(
+        key satisfies string as SchemaVaultsPackageDependency,
+      )
+    ) {
+      throw new TypeError(
+        `Unexpected key on output object of fetchSchemavaultsVersions: '${key}'`,
+      );
+    }
+    if (typeof value !== "string") {
+      throw new TypeError(
+        "Expected all values in output object of fetchSchemavaultsVersions to be strings!" +
+          " " +
+          `Received value of type ${typeof value}!`,
+      );
+    } else if (!SEMVER_RE.test(value)) {
+      throw new TypeError(
+        "Value on fetchSchemavaultsVersions output object was not valid semver!",
+      );
+    }
+  }
+
+  return output as Record<SchemaVaultsPackageDependency, string>;
 }

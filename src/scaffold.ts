@@ -111,7 +111,10 @@ export async function scaffold(
   writeFileSync(join(targetDir, "Dockerfile"), dockerfileTemplate());
   writeFileSync(
     join(targetDir, "docker-compose.yml"),
-    dockerComposeTemplate(projectName),
+    dockerComposeTemplate(
+      projectName,
+      schemavaultsVersions["@schemavaults/dbh"],
+    ),
   );
   writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
   writeFileSync(

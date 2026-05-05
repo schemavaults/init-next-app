@@ -1,18 +1,7 @@
-import versions from "../../config/versions.json";
-
-export function dockerComposeTemplate(projectName: string): string {
-  if (typeof versions !== "object" || !versions) {
-    throw new TypeError(
-      "Expected 'versions' to be resolved as a truthy object!",
-    );
-  } else if (!("@schemavaults/dbh" in versions)) {
-    throw new TypeError(
-      "Expected 'versions' to have a field '@schemavaults/dbh'!",
-    );
-  }
-
-  const dbhVersion = versions["@schemavaults/dbh"];
-
+export function dockerComposeTemplate(
+  projectName: string,
+  dbhVersion: string,
+): string {
   return `services:
   postgres:
     image: postgres:17.7
