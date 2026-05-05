@@ -5,7 +5,7 @@ export function dockerComposeTemplate(projectName: string): string {
 
   return `services:
   postgres:
-    image: postgres:17-alpine
+    image: postgres:17.7
     ports:
       - "5432:5432"
     environment:
