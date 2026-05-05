@@ -72,6 +72,9 @@ next-env.d.ts
 
 # ignore auth-codegen'd files
 src/app/auth/
+
+# persisted docker compose postgres data
+postgres-data/
 `;
 
 export async function scaffold(

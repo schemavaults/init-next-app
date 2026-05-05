@@ -5,6 +5,7 @@ export function dockerignoreTemplate(): string {
 .env*
 dist
 *.md
+postgres-data
 `;
 }
 

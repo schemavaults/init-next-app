@@ -1,6 +1,16 @@
 import versions from "../../config/versions.json";
 
 export function dockerComposeTemplate(projectName: string): string {
+  if (typeof versions !== "object" || !versions) {
+    throw new TypeError(
+      "Expected 'versions' to be resolved as a truthy object!",
+    );
+  } else if (!("@schemavaults/dbh" in versions)) {
+    throw new TypeError(
+      "Expected 'versions' to have a field '@schemavaults/dbh'!",
+    );
+  }
+
   const dbhVersion = versions["@schemavaults/dbh"];
 
   return `services:
@@ -13,7 +23,7 @@ export function dockerComposeTemplate(projectName: string): string {
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: ${projectName}
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - ./postgres-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -40,9 +50,6 @@ export function dockerComposeTemplate(projectName: string): string {
       - .env.production
     depends_on:
       - postgres-ws-proxy
-
-volumes:
-  pgdata:
 `;
 }
 
