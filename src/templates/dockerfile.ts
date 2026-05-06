@@ -10,6 +10,8 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+ENV NODE_ENV=production
+ENV SCHEMAVAULTS_APP_ENVIRONMENT=production
 RUN bun run build
 
 # Stage 3: Production runner
