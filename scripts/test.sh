@@ -28,6 +28,8 @@ test -f test-app/next.config.ts
 test -f test-app/tsconfig.json
 test -f test-app/.gitignore
 test -f test-app/src/app/layout.tsx
+test -f test-app/src/app/not-found.tsx
+test -f test-app/src/app/global-error.tsx
 test -f test-app/src/app/\(index\)/page.tsx
 test -f test-app/src/app/\(index\)/view.tsx
 test -f test-app/src/db/sql.ts

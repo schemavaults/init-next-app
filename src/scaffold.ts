@@ -7,6 +7,8 @@ import { nextConfigTemplate } from "./templates/next-config.js";
 import { tsconfigTemplate } from "./templates/tsconfig.json.js";
 import { layoutTemplate } from "./templates/layout.tsx.js";
 import { pageTemplate } from "./templates/page.tsx.js";
+import { notFoundTemplate } from "./templates/not-found.tsx.js";
+import { globalErrorTemplate } from "./templates/global-error.tsx.js";
 import { exampleAuthenticatedHomepageTemplate } from "./templates/example_authenticated_homepage.tsx.js";
 import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
@@ -129,6 +131,14 @@ export async function scaffold(
   writeFileSync(
     join(targetDir, "src", "app", "layout.tsx"),
     layoutTemplate(displayName, description),
+  );
+  writeFileSync(
+    join(targetDir, "src", "app", "not-found.tsx"),
+    notFoundTemplate(),
+  );
+  writeFileSync(
+    join(targetDir, "src", "app", "global-error.tsx"),
+    globalErrorTemplate(),
   );
   writeFileSync(
     join(targetDir, "src", "app", "(index)", "view.tsx"),
