@@ -33,6 +33,7 @@ import { sqlModuleTemplate } from "./templates/db/sql-module.js";
 import { exampleMigrationFileTemplate } from "./templates/db/example-migration-file.js";
 import { databaseTableTypesTemplate } from "./templates/db/database-table-types.js";
 import { serverlessDatabaseTemplate } from "./templates/db/serverless-database.js";
+import { clientViewTemplate } from "./templates/view.tsx";
 
 const GITIGNORE = `# dependencies
 /node_modules
@@ -93,6 +94,7 @@ export async function scaffold(
 
   // Create directories
   mkdirSync(join(targetDir, "src", "app"), { recursive: true });
+  mkdirSync(join(targetDir, "src", "app", "(index)"), { recursive: true });
   mkdirSync(join(targetDir, "src", "app", "home"), { recursive: true });
   mkdirSync(join(targetDir, "src", "db", "migrations"), { recursive: true });
   mkdirSync(join(targetDir, "src", "lib"), { recursive: true });
@@ -129,8 +131,12 @@ export async function scaffold(
     layoutTemplate(displayName, description),
   );
   writeFileSync(
-    join(targetDir, "src", "app", "page.tsx"),
-    pageTemplate(displayName),
+    join(targetDir, "src", "app", "(index)", "view.tsx"),
+    clientViewTemplate(displayName),
+  );
+  writeFileSync(
+    join(targetDir, "src", "app", "(index)", "page.tsx"),
+    pageTemplate(),
   );
   writeFileSync(
     join(targetDir, "src", "app", "client-global-providers.tsx"),
@@ -173,10 +179,7 @@ export async function scaffold(
   );
 
   // cypress e2e scaffolding
-  writeFileSync(
-    join(targetDir, "cypress.config.ts"),
-    cypressConfigTemplate(),
-  );
+  writeFileSync(join(targetDir, "cypress.config.ts"), cypressConfigTemplate());
   writeFileSync(
     join(targetDir, "cypress", "e2e", "homepage.cy.ts"),
     homepageCypressTestTemplate(displayName),
