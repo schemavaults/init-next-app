@@ -4,6 +4,7 @@ import { execSync } from "child_process";
 import { Command } from "commander";
 import { prompt } from "./prompt.js";
 import { scaffold } from "./scaffold.js";
+import { fetchSchemavaultsVersions } from "./npm-versions.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
 
@@ -61,8 +62,17 @@ const program = new Command()
         process.exit(1);
       }
 
+      console.log("Fetching latest @schemavaults/* package versions...");
+      const schemavaultsPackageVersions = await fetchSchemavaultsVersions();
+
       console.log(`\nCreating ${projectName}...`);
-      await scaffold(projectName, targetDir, displayName, description);
+      await scaffold(
+        projectName,
+        targetDir,
+        displayName,
+        description,
+        schemavaultsPackageVersions,
+      );
 
       console.log("Installing dependencies...");
       execSync("bun install", { cwd: targetDir, stdio: "inherit" });
