@@ -27,6 +27,8 @@ export function packageJsonTemplate(
         "auth-codegen": "bunx @schemavaults/auth-server-sdk codegen",
         start: "next start",
         lint: "NEXT_TELEMETRY_DISABLED=1 next typegen && eslint src --ext .ts,.tsx",
+        e2e: "docker compose --profile e2e up --build --abort-on-container-exit --exit-code-from cypress",
+        "cypress:open": "cypress open",
       },
       dependencies: {
         next: versions["next"],
@@ -56,6 +58,7 @@ export function packageJsonTemplate(
           versions["@typescript-eslint/eslint-plugin"],
         "@typescript-eslint/parser": versions["@typescript-eslint/parser"],
         "eslint-config-next": versions["next"],
+        cypress: versions["cypress"],
       },
     },
     null,

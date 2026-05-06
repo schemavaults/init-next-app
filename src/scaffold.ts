@@ -1,5 +1,6 @@
 import { mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
+import versions from "../config/versions.json";
 import { fetchSchemavaultsVersions } from "./npm-versions.js";
 import { packageJsonTemplate } from "./templates/package.json.js";
 import { nextConfigTemplate } from "./templates/next-config.js";
@@ -22,6 +23,10 @@ import withAuthenticatedServerComponentRouteGuardTemplate from "./templates/rout
 import { dockerfileTemplate } from "./templates/dockerfile.js";
 import { dockerComposeTemplate } from "./templates/docker-compose.yml.js";
 import { dockerignoreTemplate } from "./templates/dockerignore.js";
+
+// cypress templates
+import { cypressConfigTemplate } from "./templates/cypress.config.ts.js";
+import { homepageCypressTestTemplate } from "./templates/cypress/homepage.cy.ts.js";
 
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
@@ -92,6 +97,7 @@ export async function scaffold(
   mkdirSync(join(targetDir, "src", "db", "migrations"), { recursive: true });
   mkdirSync(join(targetDir, "src", "lib"), { recursive: true });
   mkdirSync(join(targetDir, "public"), { recursive: true });
+  mkdirSync(join(targetDir, "cypress", "e2e"), { recursive: true });
 
   // Write files
   writeFileSync(
@@ -114,6 +120,7 @@ export async function scaffold(
     dockerComposeTemplate(
       projectName,
       schemavaultsVersions["@schemavaults/dbh"],
+      versions["cypress"],
     ),
   );
   writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
@@ -163,5 +170,15 @@ export async function scaffold(
       "withAuthenticatedServerComponentRouteGuard.ts",
     ),
     withAuthenticatedServerComponentRouteGuardTemplate(),
+  );
+
+  // cypress e2e scaffolding
+  writeFileSync(
+    join(targetDir, "cypress.config.ts"),
+    cypressConfigTemplate(),
+  );
+  writeFileSync(
+    join(targetDir, "cypress", "e2e", "homepage.cy.ts"),
+    homepageCypressTestTemplate(displayName),
   );
 }

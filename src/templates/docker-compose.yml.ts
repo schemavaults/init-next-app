@@ -1,6 +1,7 @@
 export function dockerComposeTemplate(
   projectName: string,
   dbhVersion: string,
+  cypressVersion: string,
 ): string {
   return `services:
   postgres:
@@ -39,6 +40,26 @@ export function dockerComposeTemplate(
       - .env.production
     depends_on:
       - postgres-ws-proxy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \\"require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))\\""]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  cypress:
+    image: cypress/included:${cypressVersion}
+    working_dir: /e2e
+    volumes:
+      - ./cypress:/e2e/cypress
+      - ./cypress.config.ts:/e2e/cypress.config.ts:ro
+    environment:
+      CYPRESS_baseUrl: http://app:3000
+    depends_on:
+      app:
+        condition: service_healthy
+    profiles:
+      - e2e
 `;
 }
 

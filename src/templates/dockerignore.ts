@@ -6,6 +6,8 @@ export function dockerignoreTemplate(): string {
 dist
 *.md
 postgres-data
+cypress
+cypress.config.ts
 `;
 }
 
