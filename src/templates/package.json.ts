@@ -24,7 +24,8 @@ export function packageJsonTemplate(
           "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment test --env-file .env.test",
         "migrate:production":
           "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment production --env-file .env.production",
-        "auth-codegen": "bunx @schemavaults/auth-server-sdk codegen",
+        "auth-codegen":
+          "bunx @schemavaults/auth-server-sdk codegen --client-output-dir 'src/app/(client)/auth'",
         start: "next start",
         lint: "NEXT_TELEMETRY_DISABLED=1 next typegen && eslint src --ext .ts,.tsx",
         e2e: "docker compose --profile e2e up --build --abort-on-container-exit --exit-code-from cypress",

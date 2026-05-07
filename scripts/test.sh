@@ -30,8 +30,10 @@ test -f test-app/.gitignore
 test -f test-app/src/app/layout.tsx
 test -f test-app/src/app/not-found.tsx
 test -f test-app/src/app/global-error.tsx
-test -f test-app/src/app/\(index\)/page.tsx
-test -f test-app/src/app/\(index\)/view.tsx
+test -f test-app/src/app/\(client\)/layout.tsx
+test -f test-app/src/app/\(client\)/\(index\)/page.tsx
+test -f test-app/src/app/\(client\)/\(index\)/view.tsx
+test -f test-app/src/app/\(client\)/home/page.tsx
 test -f test-app/src/db/sql.ts
 test -f test-app/src/db/migrations/00000-example-migration.ts
 test -f test-app/tailwind.config.ts

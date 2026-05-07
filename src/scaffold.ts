@@ -12,6 +12,7 @@ import { globalErrorTemplate } from "./templates/app/global-error.tsx.js";
 import { clientViewTemplate } from "./templates/app/view.tsx";
 
 import { clientGlobalProvidersTemplate } from "./templates/app/client-global-providers.tsx.js";
+import { clientSideAuthLayoutTemplate } from "./templates/app/client-side-auth-layout.tsx.js";
 import { exampleAuthenticatedHomepageTemplate } from "./templates/example_authenticated_homepage.tsx.js";
 import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
@@ -80,7 +81,7 @@ yarn-error.log*
 next-env.d.ts
 
 # ignore auth-codegen'd files
-src/app/auth/
+src/app/(client)/auth/
 
 # persisted docker compose postgres data
 postgres-data/
@@ -99,12 +100,12 @@ async function scaffoldNextjsAppDirectory(
     process.exit(1);
   }
   const appDir = join(srcDir, "app");
+  const clientGroupDir = join(appDir, "(client)");
 
   mkdirSync(appDir);
-  mkdirSync(join(appDir, "(index)"), { recursive: true });
-  mkdirSync(join(appDir, "home"), {
-    recursive: true,
-  });
+  mkdirSync(clientGroupDir, { recursive: true });
+  mkdirSync(join(clientGroupDir, "(index)"), { recursive: true });
+  mkdirSync(join(clientGroupDir, "home"), { recursive: true });
 
   writeFileSync(
     join(appDir, "layout.tsx"),
@@ -113,16 +114,20 @@ async function scaffoldNextjsAppDirectory(
   writeFileSync(join(appDir, "not-found.tsx"), notFoundTemplate());
   writeFileSync(join(appDir, "global-error.tsx"), globalErrorTemplate());
   writeFileSync(
-    join(appDir, "(index)", "view.tsx"),
-    clientViewTemplate(displayName),
-  );
-  writeFileSync(join(appDir, "(index)", "page.tsx"), pageTemplate());
-  writeFileSync(
     join(appDir, "client-global-providers.tsx"),
     clientGlobalProvidersTemplate(),
   );
   writeFileSync(
-    join(appDir, "home", "page.tsx"),
+    join(clientGroupDir, "layout.tsx"),
+    clientSideAuthLayoutTemplate(),
+  );
+  writeFileSync(
+    join(clientGroupDir, "(index)", "view.tsx"),
+    clientViewTemplate(displayName),
+  );
+  writeFileSync(join(clientGroupDir, "(index)", "page.tsx"), pageTemplate());
+  writeFileSync(
+    join(clientGroupDir, "home", "page.tsx"),
     exampleAuthenticatedHomepageTemplate(displayName),
   );
   return;
