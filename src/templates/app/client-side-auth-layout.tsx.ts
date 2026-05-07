@@ -7,10 +7,12 @@ import {
   getSchemavaultsApiServerId,
   getSchemavaultsClientApplicationId,
 } from "@schemavaults/auth-server-sdk";
+import { connection } from "next/server";
 
 export default function ClientSideAuthLayout({
   children,
 }: PropsWithChildren): ReactElement {
+  await connection();
   const environment = getAppEnvironment();
   const app_id = getSchemavaultsClientApplicationId();
   const api_server_id = getSchemavaultsApiServerId();
