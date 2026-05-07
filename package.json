@@ -1,6 +1,6 @@
 {
   "name": "@schemavaults/init-next-app",
-  "version": "0.0.27",
+  "version": "0.0.39",
   "type": "module",
   "module": "./dist/index.js",
   "repository": {
@@ -28,6 +28,7 @@
     "access": "public"
   },
   "dependencies": {
-    "commander": "14.0.3"
+    "commander": "14.0.3",
+    "zod": "3.25.8"
   }
 }

@@ -1,10 +1,10 @@
-export function pageTemplate(displayName: string): string {
+export function clientViewTemplate(displayName: string): string {
   return `"use client";
 import type { ReactElement } from "react";
 import { Button } from "@schemavaults/ui";
 import Link from "next/link";
 
-export default function IndexPage(): ReactElement {
+export default function IndexPageView(): ReactElement {
   return (
     <main className="w-full h-dvh flex flex-col items-center justify-center flex-nowrap gap-4">
       <h1>Welcome to your new app: ${displayName}</h1>

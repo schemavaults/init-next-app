@@ -1,22 +1,39 @@
-import { mkdirSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
-import { fetchSchemavaultsVersions } from "./npm-versions.js";
+import versions from "../config/versions.json";
+import type { SchemaVaultsPackageDependency } from "./npm-versions.js";
 import { packageJsonTemplate } from "./templates/package.json.js";
 import { nextConfigTemplate } from "./templates/next-config.js";
 import { tsconfigTemplate } from "./templates/tsconfig.json.js";
-import { layoutTemplate } from "./templates/layout.tsx.js";
-import { pageTemplate } from "./templates/page.tsx.js";
+import { rootLayoutTemplate } from "./templates/app/root-layout.tsx";
+import { pageTemplate } from "./templates/app/page.tsx.js";
+import { notFoundTemplate } from "./templates/app/not-found.tsx.js";
+import { globalErrorTemplate } from "./templates/app/global-error.tsx.js";
+import { clientViewTemplate } from "./templates/app/view.tsx";
+
+import { clientGlobalProvidersTemplate } from "./templates/app/client-global-providers.tsx.js";
+import { clientSideAuthLayoutTemplate } from "./templates/app/client-side-auth-layout.tsx.js";
 import { exampleAuthenticatedHomepageTemplate } from "./templates/example_authenticated_homepage.tsx.js";
 import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
-import { clientGlobalProvidersTemplate } from "./templates/client-global-providers.tsx.js";
 import { exampleEnvTemplate } from "./templates/env.example.js";
+import { envLocalTemplate } from "./templates/env.local.js";
 import { readmeTemplate } from "./templates/readme.md.js";
 import { eslintConfigTemplate } from "./templates/eslint.config.cjs.js";
 
 // route guard templates
 import withAuthenticatedApiRouteGuardTemplate from "./templates/route_guards/withAuthenticatedApiRouteGuard.js";
 import withAuthenticatedServerComponentRouteGuardTemplate from "./templates/route_guards/withAuthenticatedServerComponentRouteGuard.js";
+
+// docker templates
+import { dockerfileTemplate } from "./templates/dockerfile.js";
+import { dockerComposeTemplate } from "./templates/docker-compose.yml.js";
+import { dockerignoreTemplate } from "./templates/dockerignore.js";
+
+// cypress templates
+import { cypressConfigTemplate } from "./templates/cypress/cypress.config.ts.js";
+import { cypressTsconfigTemplate } from "./templates/cypress/tsconfig.json.js";
+import { homepageCypressTestTemplate } from "./templates/cypress/homepage.cy.ts.js";
 
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
@@ -66,29 +83,106 @@ yarn-error.log*
 next-env.d.ts
 
 # ignore auth-codegen'd files
-src/app/auth/
+src/app/(client)/auth/
+
+# persisted docker compose postgres data
+postgres-data/
 `;
+
+async function scaffoldNextjsAppDirectory(
+  projectName: string,
+  srcDir: string,
+  displayName: string,
+  description: string,
+): Promise<void> {
+  if (!existsSync(srcDir)) {
+    console.error(
+      "Expected src/ directory to exist before this method is called!",
+    );
+    process.exit(1);
+  }
+  const appDir = join(srcDir, "app");
+  const clientGroupDir = join(appDir, "(client)");
+
+  mkdirSync(appDir);
+  mkdirSync(clientGroupDir, { recursive: true });
+  mkdirSync(join(clientGroupDir, "(index)"), { recursive: true });
+  mkdirSync(join(clientGroupDir, "home"), { recursive: true });
+
+  writeFileSync(
+    join(appDir, "layout.tsx"),
+    rootLayoutTemplate(displayName, description),
+  );
+  writeFileSync(join(appDir, "not-found.tsx"), notFoundTemplate());
+  writeFileSync(join(appDir, "global-error.tsx"), globalErrorTemplate());
+  writeFileSync(
+    join(appDir, "client-global-providers.tsx"),
+    clientGlobalProvidersTemplate(),
+  );
+  writeFileSync(
+    join(clientGroupDir, "layout.tsx"),
+    clientSideAuthLayoutTemplate(),
+  );
+  writeFileSync(
+    join(clientGroupDir, "(index)", "view.tsx"),
+    clientViewTemplate(displayName),
+  );
+  writeFileSync(join(clientGroupDir, "(index)", "page.tsx"), pageTemplate());
+  writeFileSync(
+    join(clientGroupDir, "home", "page.tsx"),
+    exampleAuthenticatedHomepageTemplate(displayName),
+  );
+  return;
+} // scaffoldNextjsAppDirectory
+
+async function scaffoldCypressE2ETesting(
+  targetDir: string,
+  displayName: string,
+): Promise<void> {
+  mkdirSync(join(targetDir, "cypress", "e2e"), { recursive: true });
+  writeFileSync(join(targetDir, "cypress.config.ts"), cypressConfigTemplate());
+  writeFileSync(
+    join(targetDir, "cypress", "tsconfig.json"),
+    cypressTsconfigTemplate() + "\n",
+  );
+  writeFileSync(
+    join(targetDir, "cypress", "e2e", "homepage.cy.ts"),
+    homepageCypressTestTemplate(displayName),
+  );
+  return;
+} // scaffoldCypressE2ETesting
 
 export async function scaffold(
   projectName: string,
   targetDir: string,
   displayName: string,
   description: string,
+  schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>,
+  clientAppId: string,
+  apiServerId: string,
 ): Promise<void> {
-  console.log("Fetching latest @schemavaults/* package versions...");
-  const schemavaultsVersions = await fetchSchemavaultsVersions();
+  // Create target directory
+  if (existsSync(targetDir)) {
+    console.error(`Target directory "${targetDir}" already exists!`);
+    process.exit(1);
+  } else {
+    mkdirSync(targetDir);
+  }
+
+  // Create src/ directory
+  const srcDir: string = join(targetDir, "src");
+  mkdirSync(srcDir);
 
   // Create directories
-  mkdirSync(join(targetDir, "src", "app"), { recursive: true });
-  mkdirSync(join(targetDir, "src", "app", "home"), { recursive: true });
-  mkdirSync(join(targetDir, "src", "db", "migrations"), { recursive: true });
-  mkdirSync(join(targetDir, "src", "lib"), { recursive: true });
+  mkdirSync(join(srcDir, "db", "migrations"), { recursive: true });
+  mkdirSync(join(srcDir, "lib"), { recursive: true });
   mkdirSync(join(targetDir, "public"), { recursive: true });
 
-  // Write files
+  // Write config files
   writeFileSync(
     join(targetDir, "package.json"),
-    packageJsonTemplate(projectName, description, schemavaultsVersions) + "\n",
+    packageJsonTemplate(projectName, description, schemavaultsPackageVersions) +
+      "\n",
   );
   writeFileSync(join(targetDir, "next.config.ts"), nextConfigTemplate());
   writeFileSync(
@@ -96,55 +190,54 @@ export async function scaffold(
     tailwindConfigTemplate(),
   );
   writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate());
+  writeFileSync(
+    join(targetDir, ".env.local"),
+    envLocalTemplate(clientAppId, apiServerId),
+  );
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
+  writeFileSync(join(targetDir, ".dockerignore"), dockerignoreTemplate());
+  writeFileSync(join(targetDir, "Dockerfile"), dockerfileTemplate());
+  writeFileSync(
+    join(targetDir, "docker-compose.yml"),
+    dockerComposeTemplate(
+      projectName,
+      schemavaultsPackageVersions["@schemavaults/dbh"],
+      versions["cypress"],
+    ),
+  );
   writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
-  writeFileSync(
-    join(targetDir, "src", "app", "layout.tsx"),
-    layoutTemplate(displayName, description),
-  );
-  writeFileSync(
-    join(targetDir, "src", "app", "page.tsx"),
-    pageTemplate(displayName),
-  );
-  writeFileSync(
-    join(targetDir, "src", "app", "client-global-providers.tsx"),
-    clientGlobalProvidersTemplate(),
-  );
-  writeFileSync(
-    join(targetDir, "src", "app", "home", "page.tsx"),
-    exampleAuthenticatedHomepageTemplate(displayName),
-  );
   writeFileSync(join(targetDir, "eslint.config.cjs"), eslintConfigTemplate());
 
+  // Next.js App Directory scaffolding
+  scaffoldNextjsAppDirectory(projectName, srcDir, displayName, description);
+
   // db file scaffolding
-  writeFileSync(join(targetDir, "src", "db", "sql.ts"), sqlModuleTemplate());
+  writeFileSync(join(srcDir, "db", "sql.ts"), sqlModuleTemplate());
   writeFileSync(
-    join(targetDir, "src", "db", "migrations", "00000-example-migration.ts"),
+    join(srcDir, "db", "migrations", "00000-example-migration.ts"),
     exampleMigrationFileTemplate(),
   );
   writeFileSync(
-    join(targetDir, "src", "db", "database-table-types.ts"),
+    join(srcDir, "db", "database-table-types.ts"),
     databaseTableTypesTemplate(),
   );
   writeFileSync(
-    join(targetDir, "src", "db", "serverless-database.ts"),
+    join(srcDir, "db", "serverless-database.ts"),
     serverlessDatabaseTemplate(),
   );
 
   // route guard templates
   writeFileSync(
-    join(targetDir, "src", "lib", "withAuthenticatedApiRouteGuard.ts"),
+    join(srcDir, "lib", "withAuthenticatedApiRouteGuard.ts"),
     withAuthenticatedApiRouteGuardTemplate(),
   );
   writeFileSync(
-    join(
-      targetDir,
-      "src",
-      "lib",
-      "withAuthenticatedServerComponentRouteGuard.ts",
-    ),
+    join(srcDir, "lib", "withAuthenticatedServerComponentRouteGuard.ts"),
     withAuthenticatedServerComponentRouteGuardTemplate(),
   );
+
+  // cypress e2e scaffolding
+  await scaffoldCypressE2ETesting(targetDir, displayName);
 }

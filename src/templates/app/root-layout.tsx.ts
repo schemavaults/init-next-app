@@ -1,18 +1,12 @@
-export function layoutTemplate(
+export function rootLayoutTemplate(
   displayName: string,
   description: string,
 ): string {
-  return `import "@schemavaults/theme/globals.css";
+  return `
 import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
-
-import {
-  getAppEnvironment,
-  getSchemavaultsApiServerId,
-  getSchemavaultsClientApplicationId,
-} from "@schemavaults/auth-server-sdk";
 import ClientGlobalProviders from "./client-global-providers";
-
+import "@schemavaults/theme/globals.css";
 
 export const metadata: Metadata = {
   title: "${displayName}",
@@ -25,11 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ClientGlobalProviders
-          environment={getAppEnvironment()}
-          api_server_id={getSchemavaultsApiServerId()}
-          client_app_id={getSchemavaultsClientApplicationId()}
-        >
+        <ClientGlobalProviders>
           {children}
         </ClientGlobalProviders>
       </body>
@@ -39,4 +29,4 @@ export default function RootLayout({
 `;
 }
 
-export default layoutTemplate;
+export default rootLayoutTemplate;

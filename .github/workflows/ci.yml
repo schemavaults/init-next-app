@@ -26,6 +26,10 @@ jobs:
       - name: Run tests
         run: ./scripts/test.sh
 
+      - name: Run e2e tests in scaffolded app
+        working-directory: ./test-app
+        run: bun run e2e
+
   publish:
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
