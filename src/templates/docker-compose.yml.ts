@@ -32,7 +32,11 @@ export function dockerComposeTemplate(
         condition: service_healthy
 
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SCHEMAVAULTS_CLIENT_APP_ID: \${SCHEMAVAULTS_CLIENT_APP_ID}
+        SCHEMAVAULTS_API_SERVER_ID: \${SCHEMAVAULTS_API_SERVER_ID}
     container_name: ${projectName}
     ports:
       - "3000:3000"

@@ -17,6 +17,7 @@ import { exampleAuthenticatedHomepageTemplate } from "./templates/example_authen
 import { tailwindConfigTemplate } from "./templates/tailwind.config.ts.js";
 import { postcssConfigTemplate } from "./templates/postcss.config.cjs.js";
 import { exampleEnvTemplate } from "./templates/env.example.js";
+import { envLocalTemplate } from "./templates/env.local.js";
 import { readmeTemplate } from "./templates/readme.md.js";
 import { eslintConfigTemplate } from "./templates/eslint.config.cjs.js";
 
@@ -152,6 +153,8 @@ export async function scaffold(
   displayName: string,
   description: string,
   schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>,
+  clientAppId: string,
+  apiServerId: string,
 ): Promise<void> {
   // Create target directory
   if (existsSync(targetDir)) {
@@ -182,6 +185,10 @@ export async function scaffold(
     tailwindConfigTemplate(),
   );
   writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate());
+  writeFileSync(
+    join(targetDir, ".env.local"),
+    envLocalTemplate(clientAppId, apiServerId),
+  );
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);

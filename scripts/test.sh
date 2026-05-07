@@ -19,7 +19,11 @@ test -f dist/index.js
 head -1 dist/index.js | grep -q '#!/usr/bin/env node'
 
 echo "==> Scaffolding test app"
-node dist/index.js test-app --display-name "Test App" --description "A test project"
+node dist/index.js test-app \
+  --display-name "Test App" \
+  --description "A test project" \
+  --client-app-id "00000000-0000-0000-0000-000000000000" \
+  --api-server-id "00000000-0000-0000-0000-000000000000"
 
 echo "==> Asserting scaffolded directory structure"
 test -d test-app
@@ -42,6 +46,9 @@ test -d test-app/public
 test -f test-app/Dockerfile
 test -f test-app/docker-compose.yml
 test -f test-app/.dockerignore
+test -f test-app/.env.local
+grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
+grep -q 'SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
 
 echo "==> Asserting scaffolded package.json content"
 grep -q '"name": "test-app"' test-app/package.json

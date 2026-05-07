@@ -9,9 +9,9 @@ import {
 } from "@schemavaults/auth-server-sdk";
 import { connection } from "next/server";
 
-export default function ClientSideAuthLayout({
+export default async function ClientSideAuthLayout({
   children,
-}: PropsWithChildren): ReactElement {
+}: PropsWithChildren): Promise<ReactElement> {
   await connection();
   const environment = getAppEnvironment();
   const app_id = getSchemavaultsClientApplicationId();

@@ -2,20 +2,46 @@ import { existsSync } from "fs";
 import { resolve } from "path";
 import { execSync } from "child_process";
 import { Command } from "commander";
+import { z } from "zod";
 import { prompt } from "./prompt.js";
 import { scaffold } from "./scaffold.js";
 import { fetchSchemavaultsVersions } from "./npm-versions.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
+const uuidSchema = z.string().uuid();
+
+async function promptForUuid(label: string): Promise<string> {
+  for (;;) {
+    const value = await prompt(`${label}: `);
+    const parsed = uuidSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data;
+    }
+    console.error(`Error: ${label} must be a valid UUID.`);
+  }
+}
 
 const program = new Command()
   .argument("[project-name]", "directory name for the new project")
   .option("--display-name <name>", "human-readable project name")
   .option("--description <text>", "project description")
+  .option(
+    "--client-app-id <uuid>",
+    "SCHEMAVAULTS_CLIENT_APP_ID (uuid) for .env.local",
+  )
+  .option(
+    "--api-server-id <uuid>",
+    "SCHEMAVAULTS_API_SERVER_ID (uuid) for .env.local",
+  )
   .action(
     async (
       projectNameArg: string | undefined,
-      opts: { displayName?: string; description?: string },
+      opts: {
+        displayName?: string;
+        description?: string;
+        clientAppId?: string;
+        apiServerId?: string;
+      },
     ) => {
       let projectName = projectNameArg;
 
@@ -55,6 +81,30 @@ const program = new Command()
         process.exit(1);
       }
 
+      let clientAppId = opts.clientAppId;
+      if (clientAppId !== undefined) {
+        const parsed = uuidSchema.safeParse(clientAppId);
+        if (!parsed.success) {
+          console.error("Error: --client-app-id must be a valid UUID.");
+          process.exit(1);
+        }
+        clientAppId = parsed.data;
+      } else {
+        clientAppId = await promptForUuid("SCHEMAVAULTS_CLIENT_APP_ID (uuid)");
+      }
+
+      let apiServerId = opts.apiServerId;
+      if (apiServerId !== undefined) {
+        const parsed = uuidSchema.safeParse(apiServerId);
+        if (!parsed.success) {
+          console.error("Error: --api-server-id must be a valid UUID.");
+          process.exit(1);
+        }
+        apiServerId = parsed.data;
+      } else {
+        apiServerId = await promptForUuid("SCHEMAVAULTS_API_SERVER_ID (uuid)");
+      }
+
       const targetDir = resolve(process.cwd(), projectName);
 
       if (existsSync(targetDir)) {
@@ -72,6 +122,8 @@ const program = new Command()
         displayName,
         description,
         schemavaultsPackageVersions,
+        clientAppId,
+        apiServerId,
       );
 
       console.log("Installing dependencies...");
