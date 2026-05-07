@@ -8,7 +8,8 @@ const SCHEMAVAULTS_PACKAGES = [
   "@schemavaults/auth-react-provider",
 ] as const;
 
-type SchemaVaultsPackageDependency = (typeof SCHEMAVAULTS_PACKAGES)[number];
+export type SchemaVaultsPackageDependency =
+  (typeof SCHEMAVAULTS_PACKAGES)[number];
 
 const SCHEMAVAULTS_PACKAGE_DEPENDENCIES =
   new Set<SchemaVaultsPackageDependency>(SCHEMAVAULTS_PACKAGES);
