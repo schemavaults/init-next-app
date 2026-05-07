@@ -5,7 +5,7 @@ export function cypressTsconfigTemplate(): string {
         target: "es2018",
         lib: ["es2018", "dom"],
         module: "esnext",
-        moduleResolution: "node",
+        moduleResolution: "bundler",
         esModuleInterop: true,
         strict: true,
         skipLibCheck: true,
