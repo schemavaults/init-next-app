@@ -32,6 +32,7 @@ import { dockerignoreTemplate } from "./templates/dockerignore.js";
 
 // cypress templates
 import { cypressConfigTemplate } from "./templates/cypress/cypress.config.ts.js";
+import { cypressTsconfigTemplate } from "./templates/cypress/tsconfig.json.js";
 import { homepageCypressTestTemplate } from "./templates/cypress/homepage.cy.ts.js";
 
 // db templates
@@ -140,6 +141,10 @@ async function scaffoldCypressE2ETesting(
 ): Promise<void> {
   mkdirSync(join(targetDir, "cypress", "e2e"), { recursive: true });
   writeFileSync(join(targetDir, "cypress.config.ts"), cypressConfigTemplate());
+  writeFileSync(
+    join(targetDir, "cypress", "tsconfig.json"),
+    cypressTsconfigTemplate() + "\n",
+  );
   writeFileSync(
     join(targetDir, "cypress", "e2e", "homepage.cy.ts"),
     homepageCypressTestTemplate(displayName),

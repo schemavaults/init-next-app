@@ -1,6 +1,6 @@
 {
   "name": "@schemavaults/init-next-app",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "type": "module",
   "module": "./dist/index.js",
   "repository": {
