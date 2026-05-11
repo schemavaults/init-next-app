@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { chmodSync, existsSync, mkdirSync, writeFileSync } from "fs";
 import { join } from "path";
 import versions from "../config/versions.json";
 import type { SchemaVaultsPackageDependency } from "./npm-versions.js";
@@ -34,6 +34,10 @@ import { dockerignoreTemplate } from "./templates/dockerignore.js";
 import { cypressConfigTemplate } from "./templates/cypress/cypress.config.ts.js";
 import { cypressTsconfigTemplate } from "./templates/cypress/tsconfig.json.js";
 import { homepageCypressTestTemplate } from "./templates/cypress/homepage.cy.ts.js";
+
+// claude templates
+import { claudeSettingsTemplate } from "./templates/claude/settings.json.js";
+import { installDepsInFreshEnvironmentHookTemplate } from "./templates/claude/install-deps-in-fresh-environment.sh.js";
 
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
@@ -87,6 +91,9 @@ src/app/(client)/auth/
 
 # persisted docker compose postgres data
 postgres-data/
+
+# claude code local settings
+.claude/settings.local.json
 `;
 
 async function scaffoldNextjsAppDirectory(
@@ -134,6 +141,18 @@ async function scaffoldNextjsAppDirectory(
   );
   return;
 } // scaffoldNextjsAppDirectory
+
+async function scaffoldClaudeFolder(targetDir: string): Promise<void> {
+  const claudeDir = join(targetDir, ".claude");
+  const hooksDir = join(claudeDir, "hooks");
+  mkdirSync(hooksDir, { recursive: true });
+
+  writeFileSync(join(claudeDir, "settings.json"), claudeSettingsTemplate());
+
+  const hookPath = join(hooksDir, "install-deps-in-fresh-environment.sh");
+  writeFileSync(hookPath, installDepsInFreshEnvironmentHookTemplate());
+  chmodSync(hookPath, 0o755);
+}
 
 async function scaffoldCypressE2ETesting(
   targetDir: string,
@@ -240,4 +259,7 @@ export async function scaffold(
 
   // cypress e2e scaffolding
   await scaffoldCypressE2ETesting(targetDir, displayName);
+
+  // .claude folder scaffolding
+  await scaffoldClaudeFolder(targetDir);
 }
