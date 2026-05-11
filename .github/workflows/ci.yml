@@ -14,6 +14,10 @@ permissions:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        deployment: [vercel, none]
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
@@ -24,7 +28,7 @@ jobs:
           bun-version: 1.3.11
 
       - name: Run tests
-        run: ./scripts/test.sh
+        run: ./scripts/test.sh ${{ matrix.deployment }}
 
       - name: Run e2e tests in scaffolded app
         working-directory: ./test-app

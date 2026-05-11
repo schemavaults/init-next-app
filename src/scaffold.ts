@@ -30,6 +30,14 @@ import { dockerfileTemplate } from "./templates/dockerfile.js";
 import { dockerComposeTemplate } from "./templates/docker-compose.yml.js";
 import { dockerignoreTemplate } from "./templates/dockerignore.js";
 
+// deployment templates
+import {
+  ciWorkflowTemplate,
+  type DeploymentStrategy,
+} from "./templates/github/ci.yml.js";
+import { migrateProductionWorkflowTemplate } from "./templates/github/migrate-production.yml.js";
+import { vercelJsonTemplate } from "./templates/vercel.json.js";
+
 // cypress templates
 import { cypressConfigTemplate } from "./templates/cypress/cypress.config.ts.js";
 import { cypressTsconfigTemplate } from "./templates/cypress/tsconfig.json.js";
@@ -179,6 +187,7 @@ export async function scaffold(
   schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>,
   clientAppId: string,
   apiServerId: string,
+  deployment: DeploymentStrategy,
 ): Promise<void> {
   // Create target directory
   if (existsSync(targetDir)) {
@@ -262,4 +271,18 @@ export async function scaffold(
 
   // .claude folder scaffolding
   await scaffoldClaudeFolder(targetDir);
+
+  // GitHub Actions CI scaffolding
+  const workflowsDir = join(targetDir, ".github", "workflows");
+  mkdirSync(workflowsDir, { recursive: true });
+  writeFileSync(join(workflowsDir, "ci.yml"), ciWorkflowTemplate(deployment));
+  writeFileSync(
+    join(workflowsDir, "migrate-production.yml"),
+    migrateProductionWorkflowTemplate(),
+  );
+
+  // Vercel deployment scaffolding
+  if (deployment === "vercel") {
+    writeFileSync(join(targetDir, "vercel.json"), vercelJsonTemplate());
+  }
 }
