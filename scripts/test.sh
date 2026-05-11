@@ -3,6 +3,15 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+DEPLOYMENT="${1:-vercel}"
+
+if [ "$DEPLOYMENT" != "vercel" ] && [ "$DEPLOYMENT" != "none" ]; then
+  echo "Usage: $0 [vercel|none]" >&2
+  exit 1
+fi
+
+echo "==> Running scaffold test with --deployment $DEPLOYMENT"
+
 if [ -d test-app ]; then
   echo "==> Cleaning up existing test-app directory"
   rm -rf test-app
@@ -24,7 +33,7 @@ node dist/index.js test-app \
   --description "A test project" \
   --client-app-id "00000000-0000-0000-0000-000000000000" \
   --api-server-id "00000000-0000-0000-0000-000000000000" \
-  --deployment vercel
+  --deployment "$DEPLOYMENT"
 
 echo "==> Asserting scaffolded directory structure"
 test -d test-app
@@ -53,11 +62,26 @@ grep -q 'SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"' test
 test -f test-app/cypress/tsconfig.json
 test -f test-app/.github/workflows/ci.yml
 test -f test-app/.github/workflows/migrate-production.yml
-test -f test-app/vercel.json
-grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml
 grep -q 'fix/\*' test-app/.github/workflows/ci.yml
 grep -q 'claude/\*' test-app/.github/workflows/ci.yml
 grep -q 'feature/\*' test-app/.github/workflows/ci.yml
+
+if [ "$DEPLOYMENT" = "vercel" ]; then
+  echo "==> Asserting vercel-specific scaffolding"
+  test -f test-app/vercel.json
+  grep -q '"devCommand"' test-app/vercel.json
+  grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml
+else
+  echo "==> Asserting deployment=none scaffolding"
+  if [ -f test-app/vercel.json ]; then
+    echo "Expected no vercel.json when --deployment none" >&2
+    exit 1
+  fi
+  if grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml; then
+    echo "Expected no publish-to-vercel job when --deployment none" >&2
+    exit 1
+  fi
+fi
 
 echo "==> Asserting scaffolded package.json content"
 grep -q '"name": "test-app"' test-app/package.json
@@ -85,4 +109,4 @@ echo "==> Asserting scaffolded app builds"
 bun run build
 bun run build:migrations
 
-echo "==> All tests passed"
+echo "==> All tests passed (--deployment $DEPLOYMENT)"
