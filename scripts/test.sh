@@ -23,7 +23,8 @@ node dist/index.js test-app \
   --display-name "Test App" \
   --description "A test project" \
   --client-app-id "00000000-0000-0000-0000-000000000000" \
-  --api-server-id "00000000-0000-0000-0000-000000000000"
+  --api-server-id "00000000-0000-0000-0000-000000000000" \
+  --deployment vercel
 
 echo "==> Asserting scaffolded directory structure"
 test -d test-app
@@ -50,6 +51,13 @@ test -f test-app/.env.local
 grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
 grep -q 'SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
 test -f test-app/cypress/tsconfig.json
+test -f test-app/.github/workflows/ci.yml
+test -f test-app/.github/workflows/migrate-production.yml
+test -f test-app/vercel.json
+grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml
+grep -q 'fix/\*' test-app/.github/workflows/ci.yml
+grep -q 'claude/\*' test-app/.github/workflows/ci.yml
+grep -q 'feature/\*' test-app/.github/workflows/ci.yml
 
 echo "==> Asserting scaffolded package.json content"
 grep -q '"name": "test-app"' test-app/package.json
