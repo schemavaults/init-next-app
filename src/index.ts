@@ -135,8 +135,21 @@ const program = new Command()
       console.log(`
 Done! Your project is ready.
 
-  cd ${projectName}
-  bun dev
+Suggested Next Steps:
+
+  1. Review .env.example to see the required environment variables.
+
+  2. Set SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY before runtime.
+     Generate keys here:
+     https://auth.schemavaults.com/apis/${apiServerId}/jwks-access-keys
+
+  3. Set your Postgres credentials (POSTGRES_URL, POSTGRES_USER,
+     POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE, etc.).
+
+  4. Start the dev server:
+
+       cd ${projectName}
+       bun dev
 `);
     },
   );
