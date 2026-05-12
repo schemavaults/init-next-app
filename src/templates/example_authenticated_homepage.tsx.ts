@@ -15,7 +15,7 @@ function ExampleLoggedInHomepageView(): ReactElement {
       <h1>You are logged in to ${displayName}!</h1>
       <div className="flex flex-row gap-4 items-center justify-center">
         <Link href="/auth/logout">
-          <Button className="flex flex-row gap-2 items-center justify-start">
+          <Button className="flex flex-row flex-nowrap gap-2 items-center justify-start">
             <LogOut />
             Logout
           </Button>
