@@ -11,13 +11,13 @@ export default function IndexPageView(): ReactElement {
       <h1>Welcome to your new app: ${displayName}</h1>
       <div className="flex flex-row gap-4 items-center justify-center w-full">
         <Link href="/auth/login">
-          <Button className="flex flex-row gap-2 items-center justify-content">
+          <Button className="flex flex-row gap-2 items-center justify-start">
             <LogIn />
             Login
           </Button>
         </Link>
         <Link href="/auth/register">
-          <Button className="flex flex-row gap-2 items-center justify-content">
+          <Button className="flex flex-row gap-2 items-center justify-start">
             <UserPlus />
             Register
           </Button>
