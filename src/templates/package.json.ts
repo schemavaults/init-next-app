@@ -43,6 +43,7 @@ export function packageJsonTemplate(
         "@schemavaults/auth-server-sdk":
           schemavaultsVersions["@schemavaults/auth-server-sdk"],
         "server-only": versions["server-only"],
+        "lucide-react": versions["lucide-react"],
       },
       devDependencies: {
         typescript: versions["typescript"],

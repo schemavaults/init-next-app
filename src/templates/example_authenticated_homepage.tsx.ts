@@ -7,6 +7,7 @@ import type { ReactElement } from "react";
 import withAuthenticatedServerComponentRouteGuard, { type IProtectedAuthenticatedServerComponentPageProps } from "@/lib/withAuthenticatedServerComponentRouteGuard";
 import { connection } from "next/server";
 import { Button } from "@schemavaults/ui";
+import { LogOut } from "lucide-react";
 
 function ExampleLoggedInHomepageView(): ReactElement {
   return (
@@ -14,7 +15,10 @@ function ExampleLoggedInHomepageView(): ReactElement {
       <h1>You are logged in to ${displayName}!</h1>
       <div className="flex flex-row gap-4 items-center justify-center">
         <Link href="/auth/logout">
-          <Button>Logout</Button>
+          <Button className="flex flex-row gap-2 items-center justify-content">
+            <LogOut />
+            Logout
+          </Button>
         </Link>
       </div>
     </main>

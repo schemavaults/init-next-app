@@ -3,6 +3,7 @@ export function clientViewTemplate(displayName: string): string {
 import type { ReactElement } from "react";
 import { Button } from "@schemavaults/ui";
 import Link from "next/link";
+import { LogIn, UserPlus } from "lucide-react";
 
 export default function IndexPageView(): ReactElement {
   return (
@@ -10,10 +11,16 @@ export default function IndexPageView(): ReactElement {
       <h1>Welcome to your new app: ${displayName}</h1>
       <div className="flex flex-row gap-4 items-center justify-center w-full">
         <Link href="/auth/login">
-          <Button>Login</Button>
+          <Button className="flex flex-row gap-2 items-center justify-content">
+            <LogIn />
+            Login
+          </Button>
         </Link>
         <Link href="/auth/register">
-          <Button>Register</Button>
+          <Button className="flex flex-row gap-2 items-center justify-content">
+            <UserPlus />
+            Register
+          </Button>
         </Link>
       </div>
     </main>
