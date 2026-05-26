@@ -9,6 +9,19 @@ import { fetchSchemavaultsVersions } from "./npm-versions.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
 const uuidSchema = z.string().uuid();
+const deploymentSchema = z.enum(["vercel", "none"]);
+type DeploymentStrategy = z.infer<typeof deploymentSchema>;
+
+async function promptForDeployment(): Promise<DeploymentStrategy> {
+  for (;;) {
+    const value = await prompt("Deployment strategy (vercel/none): ");
+    const parsed = deploymentSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data;
+    }
+    console.error("Error: deployment must be one of: vercel, none.");
+  }
+}
 
 async function promptForUuid(label: string): Promise<string> {
   for (;;) {
@@ -33,6 +46,10 @@ const program = new Command()
     "--api-server-id <uuid>",
     "SCHEMAVAULTS_API_SERVER_ID (uuid) for .env.local",
   )
+  .option(
+    "--deployment <deployment_strategy>",
+    "deployment strategy: 'vercel' or 'none'",
+  )
   .action(
     async (
       projectNameArg: string | undefined,
@@ -41,6 +58,7 @@ const program = new Command()
         description?: string;
         clientAppId?: string;
         apiServerId?: string;
+        deployment?: string;
       },
     ) => {
       let projectName = projectNameArg;
@@ -105,6 +123,20 @@ const program = new Command()
         apiServerId = await promptForUuid("SCHEMAVAULTS_API_SERVER_ID (uuid)");
       }
 
+      let deployment: DeploymentStrategy;
+      if (opts.deployment !== undefined) {
+        const parsed = deploymentSchema.safeParse(opts.deployment);
+        if (!parsed.success) {
+          console.error(
+            "Error: --deployment must be one of: vercel, none.",
+          );
+          process.exit(1);
+        }
+        deployment = parsed.data;
+      } else {
+        deployment = await promptForDeployment();
+      }
+
       const targetDir = resolve(process.cwd(), projectName);
 
       if (existsSync(targetDir)) {
@@ -124,6 +156,7 @@ const program = new Command()
         schemavaultsPackageVersions,
         clientAppId,
         apiServerId,
+        deployment,
       );
 
       console.log("Installing dependencies...");
@@ -135,8 +168,21 @@ const program = new Command()
       console.log(`
 Done! Your project is ready.
 
-  cd ${projectName}
-  bun dev
+Suggested Next Steps:
+
+  1. Review .env.example to see the required environment variables.
+
+  2. Set SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY before runtime.
+     Generate keys here:
+     https://auth.schemavaults.com/apis/${apiServerId}/jwks-access-keys
+
+  3. Set your Postgres credentials (POSTGRES_URL, POSTGRES_USER,
+     POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE, etc.).
+
+  4. Start the dev server:
+
+       cd ${projectName}
+       bun dev
 `);
     },
   );
