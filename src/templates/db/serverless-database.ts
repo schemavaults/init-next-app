@@ -7,7 +7,8 @@ export function serverlessDatabaseTemplate(): string {
     getAppEnvironment,
     type SchemaVaultsAppEnvironment,
   } from "@schemavaults/auth-server-sdk";
-  import SchemaVaultsPostgresNeonProxyAdapter, {
+  import {
+    SchemaVaultsPostgresNeonProxyAdapter,
     type IGetPostgresNeonWsProxyUrlOpts,
   } from "@schemavaults/dbh";
 
