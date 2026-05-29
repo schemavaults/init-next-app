@@ -66,11 +66,16 @@ grep -q 'fix/\*' test-app/.github/workflows/ci.yml
 grep -q 'claude/\*' test-app/.github/workflows/ci.yml
 grep -q 'feature/\*' test-app/.github/workflows/ci.yml
 
+test -f test-app/.env.example
+
 if [ "$DEPLOYMENT" = "vercel" ]; then
   echo "==> Asserting vercel-specific scaffolding"
   test -f test-app/vercel.json
   grep -q '"devCommand"' test-app/vercel.json
   grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml
+  grep -q 'VERCEL_PROJECT_ID=""' test-app/.env.example
+  grep -q 'VERCEL_ORG_ID=""' test-app/.env.example
+  grep -q 'VERCEL_TOKEN=""' test-app/.env.example
 else
   echo "==> Asserting deployment=none scaffolding"
   if [ -f test-app/vercel.json ]; then
@@ -79,6 +84,10 @@ else
   fi
   if grep -q 'publish-to-vercel' test-app/.github/workflows/ci.yml; then
     echo "Expected no publish-to-vercel job when --deployment none" >&2
+    exit 1
+  fi
+  if grep -q 'VERCEL_' test-app/.env.example; then
+    echo "Expected no VERCEL_* variables in .env.example when --deployment none" >&2
     exit 1
   fi
 fi
