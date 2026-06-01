@@ -217,7 +217,7 @@ export async function scaffold(
     join(targetDir, "tailwind.config.ts"),
     tailwindConfigTemplate(),
   );
-  writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate());
+  writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate(deployment));
   writeFileSync(
     join(targetDir, ".env.local"),
     envLocalTemplate(clientAppId, apiServerId),
