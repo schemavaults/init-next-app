@@ -17,8 +17,12 @@ export default function RootLayout({
   children,
 }: PropsWithChildren) {
   return (
-    <html lang="en">
-      <body>
+    <html
+      lang="en"
+      className="overscroll-none w-full min-h-dvh"
+      suppressHydrationWarning
+    >
+      <body className="bg-background w-full min-h-dvh">
         <ClientGlobalProviders>
           {children}
         </ClientGlobalProviders>
