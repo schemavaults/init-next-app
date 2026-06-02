@@ -66,6 +66,12 @@ grep -q 'fix/\*' test-app/.github/workflows/ci.yml
 grep -q 'claude/\*' test-app/.github/workflows/ci.yml
 grep -q 'feature/\*' test-app/.github/workflows/ci.yml
 
+echo "==> Asserting the @schemavaults/dbh database-migrations Claude skill was installed"
+test -d test-app/.claude
+test -s test-app/.claude/skills/database-migrations/SKILL.md
+grep -q 'name: database-migrations' test-app/.claude/skills/database-migrations/SKILL.md
+test -f test-app/skills-lock.json
+
 test -f test-app/.env.example
 
 if [ "$DEPLOYMENT" = "vercel" ]; then
