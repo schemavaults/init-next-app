@@ -61,6 +61,10 @@ Generate auth SDK code.
 
 ### Database Migrations
 
+This project ships with the \`@schemavaults/dbh\` \`database-migrations\` Claude
+Code skill in \`.claude/skills/\`, which documents how to author, build, validate,
+and run migrations. Update it with \`npx skills update\`.
+
 Build database migrations:
 
 \`\`\`bash

@@ -165,6 +165,25 @@ const program = new Command()
       console.log("Running auth codegen...");
       execSync("bun run auth-codegen", { cwd: targetDir, stdio: "inherit" });
 
+      // Add the @schemavaults/dbh Claude Code skill into the new project's
+      // .claude/skills/ so coding agents know how to author migrations in the
+      // format scaffolded above (numbered up()/down() files, the @/sql module,
+      // the dbh CLI). --copy vendors real files (a committed repo can't rely on
+      // symlinks into a global cache) and --agent makes the target deterministic
+      // regardless of where the user runs this CLI from.
+      const addSkillsCommand =
+        "npx --yes skills add schemavaults/dbh --agent claude-code --copy --yes";
+      console.log("Adding Claude Code skills for database migrations...");
+      try {
+        execSync(addSkillsCommand, { cwd: targetDir, stdio: "inherit" });
+      } catch {
+        console.warn(
+          `\nWarning: failed to add Claude Code skills from schemavaults/dbh.\n` +
+            `Your project is otherwise ready; add them later by running this inside ${projectName}/:\n` +
+            `  ${addSkillsCommand}\n`,
+        );
+      }
+
       console.log(`
 Done! Your project is ready.
 
