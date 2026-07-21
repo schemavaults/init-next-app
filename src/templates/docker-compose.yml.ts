@@ -2,6 +2,7 @@ export function dockerComposeTemplate(
   projectName: string,
   dbhVersion: string,
   cypressVersion: string,
+  authServerUrl: string,
 ): string {
   return `services:
   postgres:
@@ -37,6 +38,7 @@ export function dockerComposeTemplate(
       args:
         SCHEMAVAULTS_CLIENT_APP_ID: \${SCHEMAVAULTS_CLIENT_APP_ID}
         SCHEMAVAULTS_API_SERVER_ID: \${SCHEMAVAULTS_API_SERVER_ID}
+        SCHEMAVAULTS_AUTH_SERVER_URL: \${SCHEMAVAULTS_AUTH_SERVER_URL:-${authServerUrl}}
     container_name: ${projectName}
     ports:
       - "3000:3000"

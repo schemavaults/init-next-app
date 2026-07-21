@@ -2,7 +2,10 @@ import type { DeploymentStrategy } from "./github/ci.yml.js";
 
 const fakeUuid: string = "00000000-0000-0000-0000-000000000000";
 
-export function exampleEnvTemplate(deployment: DeploymentStrategy): string {
+export function exampleEnvTemplate(
+  deployment: DeploymentStrategy,
+  authServerUrl: string,
+): string {
   const vercelSection: string =
     deployment === "vercel"
       ? `
@@ -18,6 +21,7 @@ VERCEL_TOKEN=""
 # SchemaVaults Auth/Apps Configuration
 SCHEMAVAULTS_CLIENT_APP_ID="${fakeUuid}"
 SCHEMAVAULTS_API_SERVER_ID="${fakeUuid}"
+SCHEMAVAULTS_AUTH_SERVER_URL="${authServerUrl}"
 SCHEMAVAULTS_APP_ENVIRONMENT="production"
 SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY=""
 

@@ -1,6 +1,9 @@
 export type DeploymentStrategy = "vercel" | "none";
 
-export function ciWorkflowTemplate(deployment: DeploymentStrategy): string {
+export function ciWorkflowTemplate(
+  deployment: DeploymentStrategy,
+  authServerUrl: string,
+): string {
   const publishVercelJob =
     deployment === "vercel"
       ? `
@@ -62,6 +65,7 @@ jobs:
 
     env:
       SCHEMAVAULTS_APP_ENVIRONMENT: production
+      SCHEMAVAULTS_AUTH_SERVER_URL: ${authServerUrl}
 
     steps:
       - uses: actions/checkout@v6

@@ -187,6 +187,7 @@ export async function scaffold(
   schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>,
   clientAppId: string,
   apiServerId: string,
+  authServerUrl: string,
   deployment: DeploymentStrategy,
 ): Promise<void> {
   // Create target directory
@@ -217,22 +218,26 @@ export async function scaffold(
     join(targetDir, "tailwind.config.ts"),
     tailwindConfigTemplate(),
   );
-  writeFileSync(join(targetDir, ".env.example"), exampleEnvTemplate(deployment));
+  writeFileSync(
+    join(targetDir, ".env.example"),
+    exampleEnvTemplate(deployment, authServerUrl),
+  );
   writeFileSync(
     join(targetDir, ".env.local"),
-    envLocalTemplate(clientAppId, apiServerId),
+    envLocalTemplate(clientAppId, apiServerId, authServerUrl),
   );
   writeFileSync(join(targetDir, "postcss.config.cjs"), postcssConfigTemplate());
   writeFileSync(join(targetDir, "tsconfig.json"), tsconfigTemplate() + "\n");
   writeFileSync(join(targetDir, ".gitignore"), GITIGNORE);
   writeFileSync(join(targetDir, ".dockerignore"), dockerignoreTemplate());
-  writeFileSync(join(targetDir, "Dockerfile"), dockerfileTemplate());
+  writeFileSync(join(targetDir, "Dockerfile"), dockerfileTemplate(authServerUrl));
   writeFileSync(
     join(targetDir, "docker-compose.yml"),
     dockerComposeTemplate(
       projectName,
       schemavaultsPackageVersions["@schemavaults/dbh"],
       versions["cypress"],
+      authServerUrl,
     ),
   );
   writeFileSync(join(targetDir, "README.md"), readmeTemplate(displayName));
@@ -275,7 +280,10 @@ export async function scaffold(
   // GitHub Actions CI scaffolding
   const workflowsDir = join(targetDir, ".github", "workflows");
   mkdirSync(workflowsDir, { recursive: true });
-  writeFileSync(join(workflowsDir, "ci.yml"), ciWorkflowTemplate(deployment));
+  writeFileSync(
+    join(workflowsDir, "ci.yml"),
+    ciWorkflowTemplate(deployment, authServerUrl),
+  );
   writeFileSync(
     join(workflowsDir, "migrate-production.yml"),
     migrateProductionWorkflowTemplate(),

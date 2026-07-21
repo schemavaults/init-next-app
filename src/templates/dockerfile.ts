@@ -1,4 +1,4 @@
-export function dockerfileTemplate(): string {
+export function dockerfileTemplate(authServerUrl: string): string {
   return `# Stage 1: Install dependencies
 FROM oven/bun:1 AS deps
 WORKDIR /app
@@ -12,10 +12,12 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ARG SCHEMAVAULTS_CLIENT_APP_ID
 ARG SCHEMAVAULTS_API_SERVER_ID
+ARG SCHEMAVAULTS_AUTH_SERVER_URL="${authServerUrl}"
 ENV NODE_ENV=production
 ENV SCHEMAVAULTS_APP_ENVIRONMENT=production
 ENV SCHEMAVAULTS_CLIENT_APP_ID=\${SCHEMAVAULTS_CLIENT_APP_ID}
 ENV SCHEMAVAULTS_API_SERVER_ID=\${SCHEMAVAULTS_API_SERVER_ID}
+ENV SCHEMAVAULTS_AUTH_SERVER_URL=\${SCHEMAVAULTS_AUTH_SERVER_URL}
 ENV NEXT_STANDALONE_DOCKER_BUILD true
 ENV NEXT_TELEMETRY_DISABLED 1
 RUN bun run build

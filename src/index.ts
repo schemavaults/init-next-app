@@ -12,6 +12,15 @@ const uuidSchema = z.string().uuid();
 const deploymentSchema = z.enum(["vercel", "none"]);
 type DeploymentStrategy = z.infer<typeof deploymentSchema>;
 
+export const DEFAULT_AUTH_SERVER_URL = "https://auth.schemavaults.com";
+const authServerUrlSchema = z
+  .string()
+  .url()
+  .refine((value) => /^https?:\/\//.test(value), {
+    message: "must use http:// or https://",
+  })
+  .transform((value) => value.replace(/\/+$/, ""));
+
 async function promptForDeployment(): Promise<DeploymentStrategy> {
   for (;;) {
     const value = await prompt("Deployment strategy (vercel/none): ");
@@ -20,6 +29,24 @@ async function promptForDeployment(): Promise<DeploymentStrategy> {
       return parsed.data;
     }
     console.error("Error: deployment must be one of: vercel, none.");
+  }
+}
+
+async function promptForAuthServerUrl(): Promise<string> {
+  for (;;) {
+    const value = await prompt(
+      `SCHEMAVAULTS_AUTH_SERVER_URL [${DEFAULT_AUTH_SERVER_URL}]: `,
+    );
+    if (!value) {
+      return DEFAULT_AUTH_SERVER_URL;
+    }
+    const parsed = authServerUrlSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data;
+    }
+    console.error(
+      "Error: SCHEMAVAULTS_AUTH_SERVER_URL must be a valid http(s) URL.",
+    );
   }
 }
 
@@ -47,6 +74,10 @@ const program = new Command()
     "SCHEMAVAULTS_API_SERVER_ID (uuid) for .env.local",
   )
   .option(
+    "--auth-server-url <url>",
+    `SCHEMAVAULTS_AUTH_SERVER_URL for .env.local (defaults to ${DEFAULT_AUTH_SERVER_URL})`,
+  )
+  .option(
     "--deployment <deployment_strategy>",
     "deployment strategy: 'vercel' or 'none'",
   )
@@ -58,6 +89,7 @@ const program = new Command()
         description?: string;
         clientAppId?: string;
         apiServerId?: string;
+        authServerUrl?: string;
         deployment?: string;
       },
     ) => {
@@ -123,6 +155,20 @@ const program = new Command()
         apiServerId = await promptForUuid("SCHEMAVAULTS_API_SERVER_ID (uuid)");
       }
 
+      let authServerUrl: string;
+      if (opts.authServerUrl !== undefined) {
+        const parsed = authServerUrlSchema.safeParse(opts.authServerUrl);
+        if (!parsed.success) {
+          console.error(
+            "Error: --auth-server-url must be a valid http(s) URL.",
+          );
+          process.exit(1);
+        }
+        authServerUrl = parsed.data;
+      } else {
+        authServerUrl = await promptForAuthServerUrl();
+      }
+
       let deployment: DeploymentStrategy;
       if (opts.deployment !== undefined) {
         const parsed = deploymentSchema.safeParse(opts.deployment);
@@ -156,6 +202,7 @@ const program = new Command()
         schemavaultsPackageVersions,
         clientAppId,
         apiServerId,
+        authServerUrl,
         deployment,
       );
 
@@ -193,7 +240,7 @@ Suggested Next Steps:
 
   2. Set SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY before runtime.
      Generate keys here:
-     https://auth.schemavaults.com/apis/${apiServerId}/jwks-access-keys
+     ${authServerUrl}/apis/${apiServerId}/jwks-access-keys
 
   3. Set your Postgres credentials (POSTGRES_URL, POSTGRES_USER,
      POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE, etc.).

@@ -22,7 +22,8 @@ npx @schemavaults/init-next-app my-new-app-name \
   --display-name "My New App" \
   --description "A short description of my new app" \
   --client-app-id "00000000-0000-0000-0000-000000000000" \
-  --api-server-id "00000000-0000-0000-0000-000000000000"
+  --api-server-id "00000000-0000-0000-0000-000000000000" \
+  --auth-server-url "https://auth.schemavaults.com"
 ```
 
 | Flag | Description |
@@ -31,6 +32,7 @@ npx @schemavaults/init-next-app my-new-app-name \
 | `--description <text>` | Project description. |
 | `--client-app-id <uuid>` | `SCHEMAVAULTS_CLIENT_APP_ID` written to `.env.local` (must be a valid UUID). |
 | `--api-server-id <uuid>` | `SCHEMAVAULTS_API_SERVER_ID` written to `.env.local` (must be a valid UUID). |
+| `--auth-server-url <url>` | `SCHEMAVAULTS_AUTH_SERVER_URL` written to `.env.local` (must be an http(s) URL). Defaults to `https://auth.schemavaults.com`; set this to point the app at a self-hosted auth server, e.g. `https://auth.acmecorp.com`. When prompted interactively, press enter to accept the default. |
 
 ## Development
 
