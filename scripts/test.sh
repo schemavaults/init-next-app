@@ -33,6 +33,7 @@ node dist/index.js test-app \
   --description "A test project" \
   --client-app-id "00000000-0000-0000-0000-000000000000" \
   --api-server-id "00000000-0000-0000-0000-000000000000" \
+  --auth-server-url "https://auth.schemavaults.com" \
   --deployment "$DEPLOYMENT"
 
 echo "==> Asserting scaffolded directory structure"
@@ -59,6 +60,9 @@ test -f test-app/.dockerignore
 test -f test-app/.env.local
 grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
 grep -q 'SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
+grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.local
+grep -q 'ARG SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/Dockerfile
+grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL: https://auth.schemavaults.com' test-app/.github/workflows/ci.yml
 test -f test-app/cypress/tsconfig.json
 test -f test-app/.github/workflows/ci.yml
 test -f test-app/.github/workflows/migrate-production.yml
@@ -73,6 +77,7 @@ grep -q 'name: database-migrations' test-app/.claude/skills/database-migrations/
 test -f test-app/skills-lock.json
 
 test -f test-app/.env.example
+grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.example
 
 if [ "$DEPLOYMENT" = "vercel" ]; then
   echo "==> Asserting vercel-specific scaffolding"
