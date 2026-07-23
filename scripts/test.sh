@@ -27,12 +27,24 @@ echo "==> Verifying build output"
 test -f dist/index.js
 head -1 dist/index.js | grep -q '#!/usr/bin/env node'
 
+echo "==> Asserting non-UUID app/api IDs are accepted and invalid IDs are rejected"
+if node dist/index.js reject-test-app \
+  --display-name "Test App" \
+  --description "A test project" \
+  --client-app-id "Not A Valid ID!" \
+  --api-server-id "test-api-server" \
+  --auth-server-url "https://auth.schemavaults.com" \
+  --deployment "$DEPLOYMENT" >/dev/null 2>&1; then
+  echo "Expected invalid --client-app-id to be rejected" >&2
+  exit 1
+fi
+
 echo "==> Scaffolding test app"
 node dist/index.js test-app \
   --display-name "Test App" \
   --description "A test project" \
-  --client-app-id "00000000-0000-0000-0000-000000000000" \
-  --api-server-id "00000000-0000-0000-0000-000000000000" \
+  --client-app-id "test-client-app" \
+  --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
   --deployment "$DEPLOYMENT"
 
@@ -58,8 +70,8 @@ test -f test-app/Dockerfile
 test -f test-app/docker-compose.yml
 test -f test-app/.dockerignore
 test -f test-app/.env.local
-grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
-grep -q 'SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"' test-app/.env.local
+grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="test-client-app"' test-app/.env.local
+grep -q 'SCHEMAVAULTS_API_SERVER_ID="test-api-server"' test-app/.env.local
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.local
 grep -q 'ARG SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/Dockerfile
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL: https://auth.schemavaults.com' test-app/.github/workflows/ci.yml
@@ -119,8 +131,8 @@ bun run lint
 
 echo "==> Writing minimal environment variables to get scaffolded app building"
 cat >.env.production <<EOL
-SCHEMAVAULTS_CLIENT_APP_ID="00000000-0000-0000-0000-000000000000"
-SCHEMAVAULTS_API_SERVER_ID="00000000-0000-0000-0000-000000000000"
+SCHEMAVAULTS_CLIENT_APP_ID="test-client-app"
+SCHEMAVAULTS_API_SERVER_ID="test-api-server"
 SCHEMAVAULTS_APP_ENVIRONMENT="production"
 EOL
 

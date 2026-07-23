@@ -3,12 +3,15 @@ import { resolve } from "path";
 import { execSync } from "child_process";
 import { Command } from "commander";
 import { z } from "zod";
+import {
+  appIdSchema,
+  apiServerIdSchema,
+} from "@schemavaults/app-definitions";
 import { prompt } from "./prompt.js";
 import { scaffold } from "./scaffold.js";
 import { fetchSchemavaultsVersions } from "./npm-versions.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
-const uuidSchema = z.string().uuid();
 const deploymentSchema = z.enum(["vercel", "none"]);
 type DeploymentStrategy = z.infer<typeof deploymentSchema>;
 
@@ -50,14 +53,21 @@ async function promptForAuthServerUrl(): Promise<string> {
   }
 }
 
-async function promptForUuid(label: string): Promise<string> {
+function formatIdIssues(error: z.ZodError): string {
+  return error.issues.map((issue) => issue.message).join(" ");
+}
+
+async function promptForId(
+  label: string,
+  schema: z.ZodType<string, z.ZodTypeDef, string>,
+): Promise<string> {
   for (;;) {
     const value = await prompt(`${label}: `);
-    const parsed = uuidSchema.safeParse(value);
+    const parsed = schema.safeParse(value);
     if (parsed.success) {
       return parsed.data;
     }
-    console.error(`Error: ${label} must be a valid UUID.`);
+    console.error(`Error: invalid ${label}. ${formatIdIssues(parsed.error)}`);
   }
 }
 
@@ -66,12 +76,12 @@ const program = new Command()
   .option("--display-name <name>", "human-readable project name")
   .option("--description <text>", "project description")
   .option(
-    "--client-app-id <uuid>",
-    "SCHEMAVAULTS_CLIENT_APP_ID (uuid) for .env.local",
+    "--client-app-id <id>",
+    "SCHEMAVAULTS_CLIENT_APP_ID for .env.local",
   )
   .option(
-    "--api-server-id <uuid>",
-    "SCHEMAVAULTS_API_SERVER_ID (uuid) for .env.local",
+    "--api-server-id <id>",
+    "SCHEMAVAULTS_API_SERVER_ID for .env.local",
   )
   .option(
     "--auth-server-url <url>",
@@ -133,26 +143,36 @@ const program = new Command()
 
       let clientAppId = opts.clientAppId;
       if (clientAppId !== undefined) {
-        const parsed = uuidSchema.safeParse(clientAppId);
+        const parsed = appIdSchema.safeParse(clientAppId);
         if (!parsed.success) {
-          console.error("Error: --client-app-id must be a valid UUID.");
+          console.error(
+            `Error: invalid --client-app-id. ${formatIdIssues(parsed.error)}`,
+          );
           process.exit(1);
         }
         clientAppId = parsed.data;
       } else {
-        clientAppId = await promptForUuid("SCHEMAVAULTS_CLIENT_APP_ID (uuid)");
+        clientAppId = await promptForId(
+          "SCHEMAVAULTS_CLIENT_APP_ID",
+          appIdSchema,
+        );
       }
 
       let apiServerId = opts.apiServerId;
       if (apiServerId !== undefined) {
-        const parsed = uuidSchema.safeParse(apiServerId);
+        const parsed = apiServerIdSchema.safeParse(apiServerId);
         if (!parsed.success) {
-          console.error("Error: --api-server-id must be a valid UUID.");
+          console.error(
+            `Error: invalid --api-server-id. ${formatIdIssues(parsed.error)}`,
+          );
           process.exit(1);
         }
         apiServerId = parsed.data;
       } else {
-        apiServerId = await promptForUuid("SCHEMAVAULTS_API_SERVER_ID (uuid)");
+        apiServerId = await promptForId(
+          "SCHEMAVAULTS_API_SERVER_ID",
+          apiServerIdSchema,
+        );
       }
 
       let authServerUrl: string;
