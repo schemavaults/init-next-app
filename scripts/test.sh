@@ -88,6 +88,11 @@ test -s test-app/.claude/skills/database-migrations/SKILL.md
 grep -q 'name: database-migrations' test-app/.claude/skills/database-migrations/SKILL.md
 test -f test-app/skills-lock.json
 
+echo "==> Asserting the nextjs-docs Claude skill was scaffolded"
+test -s test-app/.claude/skills/nextjs-docs/SKILL.md
+grep -q 'name: nextjs-docs' test-app/.claude/skills/nextjs-docs/SKILL.md
+grep -q 'node_modules/next/dist/docs' test-app/.claude/skills/nextjs-docs/SKILL.md
+
 test -f test-app/.env.example
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.example
 

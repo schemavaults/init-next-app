@@ -46,6 +46,7 @@ import { homepageCypressTestTemplate } from "./templates/cypress/homepage.cy.ts.
 // claude templates
 import { claudeSettingsTemplate } from "./templates/claude/settings.json.js";
 import { installDepsInFreshEnvironmentHookTemplate } from "./templates/claude/install-deps-in-fresh-environment.sh.js";
+import { nextjsDocsSkillTemplate } from "./templates/claude/nextjs-docs-skill.md.js";
 
 // db templates
 import { sqlModuleTemplate } from "./templates/db/sql-module.js";
@@ -160,6 +161,13 @@ async function scaffoldClaudeFolder(targetDir: string): Promise<void> {
   const hookPath = join(hooksDir, "install-deps-in-fresh-environment.sh");
   writeFileSync(hookPath, installDepsInFreshEnvironmentHookTemplate());
   chmodSync(hookPath, 0o755);
+
+  const nextjsDocsSkillDir = join(claudeDir, "skills", "nextjs-docs");
+  mkdirSync(nextjsDocsSkillDir, { recursive: true });
+  writeFileSync(
+    join(nextjsDocsSkillDir, "SKILL.md"),
+    nextjsDocsSkillTemplate(),
+  );
 }
 
 async function scaffoldCypressE2ETesting(

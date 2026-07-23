@@ -78,5 +78,12 @@ bun run migrate:development
 bun run migrate:test
 bun run migrate:production
 \`\`\`
+
+## Claude Code Skills
+
+Alongside the \`database-migrations\` skill above, this project ships with the
+\`nextjs-docs\` Claude Code skill in \`.claude/skills/\`, which points coding
+agents at the version-matched Next.js documentation bundled with the installed
+\`next\` package (\`node_modules/next/dist/docs/\`).
 `;
 }
