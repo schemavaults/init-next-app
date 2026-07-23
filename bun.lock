@@ -5,6 +5,7 @@
     "": {
       "name": "@schemavaults/init-next-app",
       "dependencies": {
+        "@schemavaults/app-definitions": "0.11.4",
         "commander": "14.0.3",
         "zod": "3.25.8",
       },
@@ -15,6 +16,8 @@
     },
   },
   "packages": {
+    "@schemavaults/app-definitions": ["@schemavaults/app-definitions@0.11.4", "", { "dependencies": { "zod": "3.25.8" } }, "sha512-Q1nYe62rQ8F+k8C/qDAk7iCPsTVn4Xm92JRgOlyOhmyvrARDKJT5STe9q0u2inina4UgUQbE0hPIAe12ePzAug=="],
+
     "@types/node": ["@types/node@25.5.0", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw=="],
 
     "bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
