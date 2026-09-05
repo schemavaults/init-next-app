@@ -37,8 +37,23 @@ jobs:
         working-directory: ./test-app
         run: bun run e2e
 
+  template:
+    name: Template installs, type-checks and lints on its own
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Check the template directory
+        run: ./scripts/test-template.sh
+
   publish:
-    needs: build-and-test
+    needs: [build-and-test, template]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:

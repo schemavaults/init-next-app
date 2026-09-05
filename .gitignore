@@ -1,11 +1,31 @@
-node_modules/
-dist/
-test-app/
-.env
-.env.local
-.env.development
-.env.test
-.env.production
+/node_modules/
+/dist/
+/test-app/
+/tmp/
+
+# The CLI's own env files. Anchored to the repo root on purpose: the template
+# under templates/ ships a committed .env.local / .env.example with placeholders.
+/.env
+/.env.local
+/.env.development
+/.env.test
+/.env.production
 
 **/.DS_Store
-.DS_Store
+
+# Development artefacts inside the template directory. The template has no
+# .gitignore of its own (npm would rename it to .npmignore in the tarball), so
+# its ignores live here. Keep this list in sync with `ignorePatterns` in
+# templates/*/.mouldconfig.json and the negated `files` entries in package.json.
+/templates/*/node_modules/
+/templates/*/.next/
+/templates/*/next-env.d.ts
+/templates/*/bun.lock
+/templates/*/*.tsbuildinfo
+/templates/*/dist/
+/templates/*/postgres-data/
+/templates/*/.env.production
+/templates/*/src/app/(client)/auth/
+/templates/*/skills-lock.json
+/templates/*/.claude/skills/database-migrations/
+/templates/*/.claude/settings.local.json

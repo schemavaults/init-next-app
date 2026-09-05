@@ -7,8 +7,9 @@ import {
   appIdSchema,
   apiServerIdSchema,
 } from "@schemavaults/app-definitions";
+import { MouldError } from "@jalexw/mould";
 import { prompt } from "./prompt.js";
-import { scaffold } from "./scaffold.js";
+import { generateProject } from "./generate.js";
 import { fetchSchemavaultsVersions } from "./npm-versions.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
@@ -214,17 +215,25 @@ const program = new Command()
       const schemavaultsPackageVersions = await fetchSchemavaultsVersions();
 
       console.log(`\nCreating ${projectName}...`);
-      await scaffold(
-        projectName,
-        targetDir,
-        displayName,
-        description,
-        schemavaultsPackageVersions,
-        clientAppId,
-        apiServerId,
-        authServerUrl,
-        deployment,
-      );
+      try {
+        await generateProject({
+          targetDir,
+          projectName,
+          displayName,
+          description,
+          clientAppId,
+          apiServerId,
+          authServerUrl,
+          deployment,
+          schemavaultsPackageVersions,
+        });
+      } catch (err: unknown) {
+        if (err instanceof MouldError) {
+          console.error(`Error: ${err.message}`);
+          process.exit(1);
+        }
+        throw err;
+      }
 
       console.log("Installing dependencies...");
       execSync("bun install", { cwd: targetDir, stdio: "inherit" });

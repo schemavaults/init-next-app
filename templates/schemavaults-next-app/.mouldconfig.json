@@ -1,0 +1,99 @@
+{
+  "$schema": "https://jalexw.github.io/mould/openapi/mouldconfig.json",
+  "inputs": [
+    {
+      "id": "project_name",
+      "label": "Project name",
+      "description": "package.json name, Postgres database name and container name",
+      "required": true,
+      "type": "text",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    {
+      "id": "display_name",
+      "label": "Display name",
+      "description": "Human-readable name shown in the UI, metadata and README",
+      "required": true,
+      "type": "text"
+    },
+    {
+      "id": "description",
+      "label": "Project description",
+      "required": true,
+      "type": "text"
+    },
+    {
+      "id": "client_app_id",
+      "label": "SCHEMAVAULTS_CLIENT_APP_ID",
+      "description": "Written to .env.local",
+      "required": true,
+      "type": "text"
+    },
+    {
+      "id": "api_server_id",
+      "label": "SCHEMAVAULTS_API_SERVER_ID",
+      "description": "Written to .env.local",
+      "required": true,
+      "type": "text"
+    },
+    {
+      "id": "auth_server_url",
+      "label": "SCHEMAVAULTS_AUTH_SERVER_URL",
+      "description": "Replaces every occurrence of the default auth server URL",
+      "required": false,
+      "type": "text",
+      "default": "https://auth.schemavaults.com"
+    },
+    {
+      "id": "deployment",
+      "label": "Deployment strategy",
+      "required": false,
+      "type": "select",
+      "options": ["vercel", "none"],
+      "default": "none"
+    },
+    {
+      "id": "dbh_version",
+      "label": "@schemavaults/dbh version",
+      "description": "Tag of the postgres-ws-proxy image in docker-compose.yml; must match package.json",
+      "required": true,
+      "type": "text"
+    },
+    {
+      "id": "cypress_version",
+      "label": "Cypress version",
+      "description": "Tag of the cypress/included image in docker-compose.yml; must match package.json",
+      "required": true,
+      "type": "text"
+    }
+  ],
+  "substitutions": [
+    { "find": "xxx_project_name_xxx", "input": "project_name" },
+    { "find": "xxx_display_name_xxx", "input": "display_name" },
+    { "find": "xxx_description_xxx", "input": "description" },
+    { "find": "xxx_client_app_id_xxx", "input": "client_app_id" },
+    { "find": "xxx_api_server_id_xxx", "input": "api_server_id" },
+    { "find": "https://auth.schemavaults.com", "input": "auth_server_url" },
+    { "find": "xxx_dbh_version_xxx", "input": "dbh_version" },
+    { "find": "xxx_cypress_version_xxx", "input": "cypress_version" }
+  ],
+  "renames": { "_gitignore": ".gitignore" },
+  "conditionalPaths": [
+    { "when": "deployment == vercel", "paths": ["/vercel.json"] }
+  ],
+  "ignorePatterns": [
+    "node_modules/",
+    ".next/",
+    "next-env.d.ts",
+    "bun.lock",
+    "*.tsbuildinfo",
+    "dist/",
+    "postgres-data/",
+    "/src/app/(client)/auth/",
+    ".env.production",
+    "skills-lock.json",
+    "/.claude/skills/database-migrations/",
+    ".claude/settings.local.json",
+    ".gitkeep"
+  ]
+}
