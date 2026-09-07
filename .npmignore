@@ -1,0 +1,13 @@
+# Extra safety net on top of package.json `files` (which is the primary
+# allowlist): nothing outside dist/ and templates/ ships, and no env file
+# other than .env.example ever does.
+src/
+scripts/
+tsconfig.json
+.github/
+test-app/
+tmp/
+
+.env
+.env.*
+!.env.example
