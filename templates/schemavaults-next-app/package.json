@@ -4,6 +4,7 @@
   "description": "xxx_description_xxx",
   "private": true,
   "type": "module",
+  "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run auth-codegen && next dev",
     "build": "bun run auth-codegen && next build",
