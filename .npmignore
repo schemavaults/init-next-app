@@ -5,6 +5,7 @@ src/
 scripts/
 tsconfig.json
 .github/
+.claude/
 test-app/
 tmp/
 
