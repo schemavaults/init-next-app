@@ -5,6 +5,7 @@
     "": {
       "name": "@schemavaults/init-next-app",
       "dependencies": {
+        "@jalexw/mould": "0.7.1",
         "@schemavaults/app-definitions": "0.11.4",
         "commander": "14.0.3",
         "zod": "3.25.8",
@@ -16,6 +17,8 @@
     },
   },
   "packages": {
+    "@jalexw/mould": ["@jalexw/mould@0.7.1", "", { "dependencies": { "commander": "14.0.0", "zod": "4.4.3" }, "bin": { "mould": "dist/bin/mould.js" } }, "sha512-DW0vZAqmPKjJ8NZpLuAuNY4IoeQPqMinmLRJVAP4aXVQ2/lgRwa6kpjXTJy65lKkUmDGtw8HTWr0NjhkVEgtVg=="],
+
     "@schemavaults/app-definitions": ["@schemavaults/app-definitions@0.11.4", "", { "dependencies": { "zod": "3.25.8" } }, "sha512-Q1nYe62rQ8F+k8C/qDAk7iCPsTVn4Xm92JRgOlyOhmyvrARDKJT5STe9q0u2inina4UgUQbE0hPIAe12ePzAug=="],
 
     "@types/node": ["@types/node@25.5.0", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw=="],
@@ -29,5 +32,9 @@
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
 
     "zod": ["zod@3.25.8", "", {}, "sha512-iJPWX8HoZ2VE21VrhHGU9jVo/kVDUQyqM9vF0MxDhW/fp2sAl1eVwGJgiYZdHGiMwQJImXIW80lKk0MnfDxqiQ=="],
+
+    "@jalexw/mould/commander": ["commander@14.0.0", "", {}, "sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA=="],
+
+    "@jalexw/mould/zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
   }
 }
