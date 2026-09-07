@@ -54,28 +54,14 @@ async function promptForAuthServerUrl(): Promise<string> {
   }
 }
 
-/**
- * The id schemas come from @schemavaults/app-definitions, which carries its own
- * zod (v3) instance, so they are typed structurally rather than as this
- * package's zod (v4) types.
- */
-interface IdValidationIssues {
-  issues: readonly { message: string }[];
-}
-
-interface IdSchema {
-  safeParse(
-    value: string,
-  ):
-    | { success: true; data: string }
-    | { success: false; error: IdValidationIssues };
-}
-
-function formatIdIssues(error: IdValidationIssues): string {
+function formatIdIssues(error: z.ZodError<string>): string {
   return error.issues.map((issue) => issue.message).join(" ");
 }
 
-async function promptForId(label: string, schema: IdSchema): Promise<string> {
+async function promptForId(
+  label: string,
+  schema: z.ZodType<string>,
+): Promise<string> {
   for (;;) {
     const value = await prompt(`${label}: `);
     const parsed = schema.safeParse(value);

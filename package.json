@@ -45,7 +45,7 @@
   },
   "dependencies": {
     "@jalexw/mould": "0.7.1",
-    "@schemavaults/app-definitions": "0.11.4",
+    "@schemavaults/app-definitions": "0.12.1",
     "commander": "14.0.3",
     "zod": "4.4.3"
   },
