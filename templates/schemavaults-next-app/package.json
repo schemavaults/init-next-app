@@ -26,8 +26,8 @@
     "@schemavaults/theme": "0.26.1",
     "@schemavaults/ui": "0.99.3",
     "@schemavaults/dbh": "0.14.0",
-    "@schemavaults/auth-react-provider": "0.16.19",
-    "@schemavaults/auth-server-sdk": "0.28.29",
+    "@schemavaults/auth-react-provider": "0.16.20",
+    "@schemavaults/auth-server-sdk": "0.28.30",
     "server-only": "0.0.1",
     "lucide-react": "1.14.0"
   },
