@@ -3,13 +3,12 @@
 /test-app/
 /tmp/
 
-# The CLI's own env files. Anchored to the repo root on purpose: the template
-# under templates/ ships a committed .env.local / .env.example with placeholders.
-/.env
-/.env.local
-/.env.development
-/.env.test
-/.env.production
+# Env files anywhere in the repo, including inside templates/. The template
+# ships its local defaults as `_env.local` (renamed to .env.local on copy) so
+# a real .env* can never be committed; .env.example is the documented exception.
+.env
+.env.*
+!.env.example
 
 **/.DS_Store
 
@@ -24,7 +23,6 @@
 /templates/*/*.tsbuildinfo
 /templates/*/dist/
 /templates/*/postgres-data/
-/templates/*/.env.production
 /templates/*/src/app/(client)/auth/
 /templates/*/skills-lock.json
 /templates/*/.claude/skills/database-migrations/

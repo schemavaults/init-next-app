@@ -62,6 +62,13 @@ const pkg = JSON.parse(contents.get("package.json"));
 if (!pkg.devDependencies?.cypress) fail("package.json has no devDependencies.cypress (the docker-compose cypress tag is derived from it)");
 if (!pkg.dependencies?.["@schemavaults/dbh"]) fail("package.json has no dependencies['@schemavaults/dbh']");
 
+// the only env file the template may contain is .env.example; local defaults live in _env.local
+for (const file of files) {
+  const base = file.split("/").pop();
+  if (/^\.env(\..+)?$/.test(base) && base !== ".env.example") fail(`${file}: env files must not exist in the template (store local defaults in _env.local)`);
+}
+if (!existsSync(join(dir, "_env.local"))) fail("template must contain _env.local (renamed to .env.local on copy)");
+
 // a .gitignore in the template would be renamed by npm when packing
 if (existsSync(join(dir, ".gitignore"))) fail("template must not contain a .gitignore (store it as _gitignore)");
 if (existsSync(join(dir, ".npmignore"))) fail("template must not contain a .npmignore");

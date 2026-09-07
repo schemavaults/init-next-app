@@ -49,8 +49,10 @@ project as-is, apart from:
 - **Conditional blocks** wrapped in `# mould:if deployment == vercel` … `# mould:endif` comment
   lines (`.github/workflows/ci.yml`, `.env.example`), and `vercel.json`, which is only copied when
   `--deployment vercel` is chosen.
-- **`_gitignore`**, written to the new project as `.gitignore` (npm would otherwise rename a real
-  `.gitignore` inside the published package).
+- **`_gitignore`** and **`_env.local`**, written to the new project as `.gitignore` and
+  `.env.local`. npm would otherwise rename a real `.gitignore` inside the published package, and
+  keeping every `.env*` (other than `.env.example`) out of the template means a real env file can
+  never be committed or shipped by accident.
 - **`@schemavaults/*` versions** in `package.json`, which the CLI bumps to the latest published
   versions after rendering; the template pins real versions so it installs on its own.
 
@@ -82,9 +84,12 @@ bun run typecheck   # runs auth-codegen first; its output is git-ignored and nev
 bun run lint
 ```
 
+To run the template itself, copy `_env.local` to `.env.local` first; every `.env*` except
+`.env.example` is ignored by git and excluded from the published package.
+
 Rules of thumb:
-- Never add a `.gitignore` inside the template; edit `_gitignore` for the generated app and the
-  repository root `.gitignore` for development artefacts.
+- Never add a `.gitignore` or a `.env*` file inside the template; edit `_gitignore` / `_env.local`
+  for the generated app and the repository root `.gitignore` for development artefacts.
 - New placeholders must be declared under `substitutions` in `.mouldconfig.json`; new
   build artefacts must be listed in three places: `ignorePatterns` in `.mouldconfig.json` (so
   mould never copies them), the root `.gitignore` (so git never tracks them), and the negated

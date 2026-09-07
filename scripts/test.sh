@@ -29,7 +29,7 @@ test -f dist/index.js
 head -1 dist/index.js | grep -q '#!/usr/bin/env node'
 
 # Run the CLI from the packed tarball rather than the checkout, so anything the
-# tarball would omit (the template's .env.local, _gitignore, the hook's
+# tarball would omit (the template's _env.local, _gitignore, the hook's
 # executable bit) fails here instead of after publishing.
 echo "==> Packing the tarball and asserting its contents"
 rm -rf tmp/pack && mkdir -p tmp/pack
@@ -39,7 +39,7 @@ const files = require("./tmp/pack/pack.json")[0].files.map((f) => f.path);
 const required = [
   "dist/index.js",
   "templates/schemavaults-next-app/.mouldconfig.json",
-  "templates/schemavaults-next-app/.env.local",
+  "templates/schemavaults-next-app/_env.local",
   "templates/schemavaults-next-app/.env.example",
   "templates/schemavaults-next-app/_gitignore",
   "templates/schemavaults-next-app/public/.gitkeep",
@@ -50,9 +50,12 @@ const required = [
 const missing = required.filter((f) => !files.includes(f));
 const leaked = files.filter((f) => /(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) && !f.startsWith("dist/index.js"));
 const gitignores = files.filter((f) => /(^|\/)\.(git|npm)ignore$/.test(f));
+// No env file may ship except the documented .env.example
+const envFiles = files.filter((f) => /(^|\/)\.env(\..+)?$/.test(f) && !f.endsWith("/.env.example"));
 if (missing.length) { console.error("Missing from tarball:", missing); process.exit(1); }
 if (leaked.length) { console.error("Development artefacts leaked into tarball:", leaked); process.exit(1); }
 if (gitignores.length) { console.error("Unexpected ignore files in tarball:", gitignores); process.exit(1); }
+if (envFiles.length) { console.error("Env files leaked into tarball:", envFiles); process.exit(1); }
 console.log(`tarball ok: ${files.length} files`);
 NODE
 tar -xzf tmp/pack/*.tgz -C tmp/pack

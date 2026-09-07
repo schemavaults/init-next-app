@@ -77,7 +77,7 @@
     { "find": "xxx_dbh_version_xxx", "input": "dbh_version" },
     { "find": "xxx_cypress_version_xxx", "input": "cypress_version" }
   ],
-  "renames": { "_gitignore": ".gitignore" },
+  "renames": { "_gitignore": ".gitignore", "_env.local": ".env.local" },
   "conditionalPaths": [
     { "when": "deployment == vercel", "paths": ["/vercel.json"] }
   ],
@@ -90,7 +90,13 @@
     "dist/",
     "postgres-data/",
     "/src/app/(client)/auth/",
+    ".env",
+    ".env.local",
+    ".env.development",
+    ".env.test",
+    ".env.staging",
     ".env.production",
+    ".env.*.local",
     "skills-lock.json",
     "/.claude/skills/database-migrations/",
     ".claude/settings.local.json",

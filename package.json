@@ -21,7 +21,9 @@
     "!templates/*/*.tsbuildinfo",
     "!templates/*/src/app/(client)/auth",
     "!templates/*/postgres-data",
-    "!templates/*/.env.production",
+    "!templates/**/.env",
+    "!templates/**/.env.*",
+    "templates/*/.env.example",
     "!templates/*/skills-lock.json",
     "!templates/*/.claude/skills/database-migrations",
     "!templates/*/.claude/settings.local.json"
