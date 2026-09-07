@@ -5,22 +5,25 @@
     "": {
       "name": "@schemavaults/init-next-app",
       "dependencies": {
-        "@schemavaults/app-definitions": "0.11.4",
+        "@jalexw/mould": "0.7.1",
+        "@schemavaults/app-definitions": "0.12.1",
         "commander": "14.0.3",
-        "zod": "3.25.8",
+        "zod": "4.4.3",
       },
       "devDependencies": {
-        "bun-types": "1.3.14",
+        "bun-types": "1.4.2",
         "typescript": "5.9.3",
       },
     },
   },
   "packages": {
-    "@schemavaults/app-definitions": ["@schemavaults/app-definitions@0.11.4", "", { "dependencies": { "zod": "3.25.8" } }, "sha512-Q1nYe62rQ8F+k8C/qDAk7iCPsTVn4Xm92JRgOlyOhmyvrARDKJT5STe9q0u2inina4UgUQbE0hPIAe12ePzAug=="],
+    "@jalexw/mould": ["@jalexw/mould@0.7.1", "", { "dependencies": { "commander": "14.0.0", "zod": "4.4.3" }, "bin": { "mould": "dist/bin/mould.js" } }, "sha512-DW0vZAqmPKjJ8NZpLuAuNY4IoeQPqMinmLRJVAP4aXVQ2/lgRwa6kpjXTJy65lKkUmDGtw8HTWr0NjhkVEgtVg=="],
+
+    "@schemavaults/app-definitions": ["@schemavaults/app-definitions@0.12.1", "", { "dependencies": { "zod": "4.4.3" } }, "sha512-q168n+KsnmD3y8mwfleW3PQ1h7MXt8P4AkkoEcS6iCOllU7+J/f3bEG0NQ9cBKZYZxd7a7/LYmAjhsrAqfa6bQ=="],
 
     "@types/node": ["@types/node@25.5.0", "", { "dependencies": { "undici-types": "~7.18.0" } }, "sha512-jp2P3tQMSxWugkCUKLRPVUpGaL5MVFwF8RDuSRztfwgN1wmqJeMSbKlnEtQqU8UrhTmzEmZdu2I6v2dpp7XIxw=="],
 
-    "bun-types": ["bun-types@1.3.14", "", { "dependencies": { "@types/node": "*" } }, "sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ=="],
+    "bun-types": ["bun-types@1.4.2", "", { "dependencies": { "@types/node": "*" } }, "sha512-bxV1FgK7yBIzjRe5zBozIM4Bem11ZJcCXSrjWRG3YWLt8yFDePu4cLjpebO8OvPeIE9trbyPF4fuj3Cia4Fj3w=="],
 
     "commander": ["commander@14.0.3", "", {}, "sha512-H+y0Jo/T1RZ9qPP4Eh1pkcQcLRglraJaSLoyOtHxu6AapkjWVCy2Sit1QQ4x3Dng8qDlSsZEet7g5Pq06MvTgw=="],
 
@@ -28,6 +31,8 @@
 
     "undici-types": ["undici-types@7.18.2", "", {}, "sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w=="],
 
-    "zod": ["zod@3.25.8", "", {}, "sha512-iJPWX8HoZ2VE21VrhHGU9jVo/kVDUQyqM9vF0MxDhW/fp2sAl1eVwGJgiYZdHGiMwQJImXIW80lKk0MnfDxqiQ=="],
+    "zod": ["zod@4.4.3", "", {}, "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ=="],
+
+    "@jalexw/mould/commander": ["commander@14.0.0", "", {}, "sha512-2uM9rYjPvyq39NwLRqaiLtWHyDC1FvryJDa2ATTVims5YAS4PupsEQsDvP14FqhFr0P49CYDugi59xaxJlTXRA=="],
   }
 }
