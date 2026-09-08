@@ -2,6 +2,8 @@
 
 A CLI tool for scaffolding out a new Next.js application with [@schemavaults/auth](https://github.com/schemavaults/auth), [@schemavaults/theme](https://github.com/schemavaults/theme), and [@schemavaults/dbh](https://github.com/schemavaults/dbh) configured.
 
+Every scaffolded app also ships a typed HTTP API layer: each route under `src/app/api/` is its own [Hono](https://hono.dev) app whose request and response schemas are declared with zod and [`@asteasolutions/zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi). A committed `public/openapi.json` is generated from those declarations (`bun run openapi:generate`, verified by `bun run openapi:check` in lint and CI), served at `/openapi.json`, and rendered at `/docs` by inlined React components with no external documentation UI dependency. An `api-routes` Claude Code skill in the app's `.claude/skills/` explains how to add routes so they are registered in the document.
+
 When initializing a project, the CLI also installs the [@schemavaults/dbh](https://github.com/schemavaults/dbh) `database-migrations` Claude Code skill into the new project's `.claude/skills/` (via `npx skills add`), so coding agents know how to author migrations in the format this template scaffolds. It additionally scaffolds a `nextjs-docs` skill that points coding agents at the version-matched Next.js documentation bundled with the installed `next` package (`node_modules/next/dist/docs/`) instead of web searches or memory.
 
 ## Usage
@@ -53,6 +55,10 @@ project as-is, apart from:
   `.env.local`. npm would otherwise rename a real `.gitignore` inside the published package, and
   keeping every `.env*` (other than `.env.example`) out of the template means a real env file can
   never be committed or shipped by accident.
+- **`public/openapi.json`**, which is generated from the template's example routes and, like the
+  source it is generated from, contains the display-name/description placeholders; after
+  substitution the scaffolded app's `bun run openapi:check` still passes because both sides were
+  substituted identically.
 - **`@schemavaults/*` versions** in `package.json`, which the CLI bumps to the latest published
   versions after rendering; the template pins real versions so it installs on its own.
 
@@ -80,8 +86,9 @@ tooling:
 ```bash
 cd templates/schemavaults-next-app
 bun install
-bun run typecheck   # runs auth-codegen first; its output is git-ignored and never shipped
-bun run lint
+bun run typecheck         # runs auth-codegen first; its output is git-ignored and never shipped
+bun run lint              # also verifies public/openapi.json is up to date
+bun run openapi:generate  # after adding/changing src/app/api/**/operations.ts
 ```
 
 To run the template itself, copy `_env.local` to `.env.local` first; every `.env*` except

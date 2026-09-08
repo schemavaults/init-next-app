@@ -46,6 +46,9 @@ const required = [
   "templates/schemavaults-next-app/.claude/hooks/install-deps-in-fresh-environment.sh",
   "templates/schemavaults-next-app/.github/workflows/ci.yml",
   "templates/schemavaults-next-app/vercel.json",
+  "templates/schemavaults-next-app/public/openapi.json",
+  "templates/schemavaults-next-app/scripts/generate-openapi.ts",
+  "templates/schemavaults-next-app/.claude/skills/api-routes/SKILL.md",
 ];
 const missing = required.filter((f) => !files.includes(f));
 const leaked = files.filter((f) => /(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) && !f.startsWith("dist/index.js"));
@@ -143,6 +146,37 @@ test -s test-app/.claude/skills/nextjs-docs/SKILL.md
 grep -q 'name: nextjs-docs' test-app/.claude/skills/nextjs-docs/SKILL.md
 grep -q 'node_modules/next/dist/docs' test-app/.claude/skills/nextjs-docs/SKILL.md
 
+echo "==> Asserting the api-routes Claude skill was scaffolded"
+test -s test-app/.claude/skills/api-routes/SKILL.md
+grep -q 'name: api-routes' test-app/.claude/skills/api-routes/SKILL.md
+grep -q 'defineApiOperation' test-app/.claude/skills/api-routes/SKILL.md
+
+echo "==> Asserting the Hono/OpenAPI API scaffolding"
+test -f test-app/src/lib/api/define.ts
+test -f test-app/src/lib/api/create-api-route.ts
+test -f test-app/src/lib/api/error-response.ts
+test -f test-app/src/lib/api/openapi-document.ts
+test -f test-app/src/lib/api/openapi-info.ts
+test -f test-app/scripts/generate-openapi.ts
+test -f test-app/src/app/api/health/operations.ts
+test -f test-app/src/app/api/health/route.ts
+test -f test-app/src/app/api/greet/\[name\]/operations.ts
+test -f test-app/src/app/api/greet/\[name\]/route.ts
+test -f test-app/src/app/api/me/operations.ts
+test -f test-app/src/app/api/me/route.ts
+test -f test-app/src/app/docs/page.tsx
+test -d test-app/src/components/openapi-docs
+test -f test-app/public/openapi.json
+test -f test-app/cypress/e2e/api.cy.ts
+grep -q '"title": "Test App"' test-app/public/openapi.json
+grep -q '"description": "A test project"' test-app/public/openapi.json
+grep -q '"/api/health"' test-app/public/openapi.json
+grep -q '"openapi:generate"' test-app/package.json
+grep -q '"openapi:check"' test-app/package.json
+grep -q '"hono"' test-app/package.json
+grep -q '"@asteasolutions/zod-to-openapi"' test-app/package.json
+grep -q 'openapi:check' test-app/.github/workflows/ci.yml
+
 test -f test-app/.env.example
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.example
 
@@ -198,8 +232,11 @@ cd test-app
 bun install
 bun run typecheck
 
-echo "==> Asserting scaffolded app passes eslint checks"
+echo "==> Asserting scaffolded app passes eslint checks (includes openapi:check)"
 bun run lint
+
+echo "==> Asserting the committed openapi.json matches what the scaffolded app generates"
+bun run openapi:check
 
 echo "==> Writing minimal environment variables to get scaffolded app building"
 cat >.env.production <<EOL

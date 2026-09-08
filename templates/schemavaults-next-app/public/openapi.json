@@ -1,0 +1,436 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "xxx_display_name_xxx",
+    "version": "0.0.1",
+    "description": "xxx_description_xxx"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "The origin this document was served from"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Account"
+    },
+    {
+      "name": "Examples"
+    },
+    {
+      "name": "System"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "SchemaVaults access token. Browser sessions send it automatically as a cookie; other clients send `Authorization: Bearer <access token>`."
+      }
+    },
+    "schemas": {
+      "ApiErrorIssue": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Dotted location of the invalid value, prefixed with `params`, `query` or `body`.",
+            "example": "body.email"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid email address"
+          }
+        },
+        "required": [
+          "path",
+          "message"
+        ]
+      },
+      "ApiErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "description": "Machine-readable error code, e.g. `validation_error`, `invalid_json`, `not_found`, `conflict`, `internal_error`.",
+                "example": "validation_error"
+              },
+              "message": {
+                "type": "string",
+                "example": "Request validation failed"
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ApiErrorIssue"
+                },
+                "description": "Present for `validation_error` responses."
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ]
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "description": "Error envelope returned by every API operation."
+      },
+      "AuthErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string",
+            "example": "Authentication failed, no token sources found for request"
+          }
+        },
+        "required": [
+          "success",
+          "error",
+          "message"
+        ],
+        "description": "Returned by the SchemaVaults auth guard when the caller is not authenticated or not authorized."
+      },
+      "CreateGreetingRequest": {
+        "type": "object",
+        "properties": {
+          "greeting": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 32,
+            "example": "Good morning"
+          },
+          "punctuation": {
+            "type": "string",
+            "enum": [
+              "!",
+              ".",
+              "?"
+            ],
+            "default": "!"
+          }
+        },
+        "required": [
+          "greeting"
+        ]
+      },
+      "CurrentUser": {
+        "type": "object",
+        "properties": {
+          "uid": {
+            "type": "string",
+            "example": "8d5d3a9e-6d2f-4d7e-9c1b-2f6a1d0e4b3c"
+          },
+          "email": {
+            "type": "string",
+            "example": "ada@example.com"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "Ada Lovelace"
+          },
+          "admin": {
+            "type": "boolean",
+            "description": "Whether the user is an administrator."
+          }
+        },
+        "required": [
+          "uid",
+          "email",
+          "admin"
+        ]
+      },
+      "Greeting": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Hello, Ada!"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ada"
+          }
+        },
+        "required": [
+          "message",
+          "name"
+        ]
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Server time when the check ran (ISO 8601).",
+            "example": "2025-01-01T00:00:00.000Z"
+          }
+        },
+        "required": [
+          "status",
+          "timestamp"
+        ]
+      }
+    },
+    "parameters": {}
+  },
+  "paths": {
+    "/api/greet/{name}": {
+      "get": {
+        "operationId": "getGreeting",
+        "summary": "Greet someone",
+        "description": "Builds a greeting from a path parameter and optional query parameters.",
+        "tags": [
+          "Examples"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Who to greet.",
+              "example": "Ada"
+            },
+            "required": true,
+            "description": "Who to greet.",
+            "name": "name",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32,
+              "default": "Hello",
+              "description": "The salutation to use.",
+              "example": "Howdy"
+            },
+            "required": false,
+            "description": "The salutation to use.",
+            "name": "greeting",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false",
+              "description": "Upper-case the whole message."
+            },
+            "required": false,
+            "description": "Upper-case the whole message.",
+            "name": "shout",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The greeting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Greeting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The path parameters, query string or JSON body failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createGreeting",
+        "summary": "Greet someone with a custom salutation",
+        "tags": [
+          "Examples"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64,
+              "description": "Who to greet.",
+              "example": "Ada"
+            },
+            "required": true,
+            "description": "Who to greet.",
+            "name": "name",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "description": "How to greet the named person.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateGreetingRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The greeting.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Greeting"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The path parameters, query string or JSON body failed validation.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "description": "Liveness probe for load balancers and uptime monitors. Always public.",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "The service is up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "summary": "Get the authenticated user",
+        "tags": [
+          "Account"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The caller's profile.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, expired or invalid access token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "webhooks": {}
+}

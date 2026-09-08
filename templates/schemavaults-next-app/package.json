@@ -6,7 +6,7 @@
   "type": "module",
   "packageManager": "bun@1.4.2",
   "scripts": {
-    "dev": "bun run auth-codegen && next dev",
+    "dev": "bun run auth-codegen && bun run openapi:generate && next dev",
     "build": "bun run auth-codegen && next build",
     "typecheck": "bun run auth-codegen && next typegen && tsc --noEmit",
     "build:migrations": "bunx @schemavaults/dbh build-db-migrations ./src/db/migrations --outdir ./dist/migrations --sql-module ./src/db/sql.ts --sql-outdir ./dist/",
@@ -14,8 +14,10 @@
     "migrate:test": "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment test --env-file .env.test",
     "migrate:production": "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment production --env-file .env.production",
     "auth-codegen": "bunx @schemavaults/auth-server-sdk codegen --client-output-dir 'src/app/(client)/auth'",
+    "openapi:generate": "bun scripts/generate-openapi.ts",
+    "openapi:check": "bun scripts/generate-openapi.ts --check",
     "start": "next start",
-    "lint": "NEXT_TELEMETRY_DISABLED=1 next typegen && eslint src --ext .ts,.tsx",
+    "lint": "bun run openapi:check && NEXT_TELEMETRY_DISABLED=1 next typegen && eslint src --ext .ts,.tsx",
     "e2e": "docker compose --profile e2e up --build --abort-on-container-exit --exit-code-from cypress",
     "cypress:open": "cypress open"
   },
@@ -29,7 +31,10 @@
     "@schemavaults/auth-react-provider": "0.16.20",
     "@schemavaults/auth-server-sdk": "0.28.30",
     "server-only": "0.0.1",
-    "lucide-react": "1.14.0"
+    "lucide-react": "1.14.0",
+    "hono": "4.13.7",
+    "zod": "4.4.3",
+    "@asteasolutions/zod-to-openapi": "9.1.0"
   },
   "devDependencies": {
     "typescript": "5.9.3",
