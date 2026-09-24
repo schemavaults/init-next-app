@@ -1,4 +1,4 @@
-import { defineApiOperation, z } from "@/lib/api/define";
+import { defineApiOperation, publicAccess, z } from "@/lib/api/operation";
 
 export const HealthResponseSchema = z
   .object({
@@ -15,10 +15,11 @@ export const getHealth = defineApiOperation({
   path: "/api/health",
   operationId: "getHealth",
   summary: "Health check",
-  description:
-    "Liveness probe for load balancers and uptime monitors. Always public.",
+  description: "Liveness probe for load balancers and uptime monitors.",
   tags: ["System"],
+  auth: publicAccess(),
   responses: {
     200: { description: "The service is up.", schema: HealthResponseSchema },
   },
+  handler: (ctx) => ctx.json(200, { status: "ok", timestamp: new Date().toISOString() }),
 });

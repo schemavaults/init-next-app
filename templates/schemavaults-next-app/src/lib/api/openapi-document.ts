@@ -1,76 +1,77 @@
 /**
- * Builds the OpenAPI 3.1 document from a list of API operations.
- * Pure module: used by `scripts/generate-openapi.ts` (bun) to write
- * `public/openapi.json`, which `/docs` and `/openapi.json` serve.
+ * Builds the OpenAPI 3.1 document for the whole catalogue. Used by
+ * `scripts/generate-openapi.ts` (writes `public/openapi.json`) and by the
+ * `/docs` pages (rendered live, so they can never lag behind the code).
  */
 import {
-  OpenAPIRegistry,
-  OpenApiGeneratorV31,
-} from "@asteasolutions/zod-to-openapi";
-import {
-  API_HTTP_METHODS,
-  BEARER_AUTH_SECURITY_SCHEME,
-  type AnyApiOperation,
-} from "./define";
+  buildOpenApiDocument,
+  isPublicOperationAuth,
+  type AnyOperationDefinition,
+  type OpenAPIObject,
+  type ResponseDefinition,
+} from "@schemavaults/openapi-operations";
+import { ApiErrorResponseSchema } from "./operation";
+import { openApiInfo } from "./openapi-info";
+import { apiOperations } from "./operations";
 
-export interface OpenApiDocumentInfo {
-  title: string;
-  version: string;
-  description?: string;
-  servers?: Array<{ url: string; description?: string }>;
-}
+/**
+ * Responses the operations runtime produces on its own, added to the
+ * document for every operation that can trigger them. Declared responses
+ * for the same status take precedence.
+ */
+export function runtimeErrorResponses(
+  operation: AnyOperationDefinition,
+): Record<number, ResponseDefinition> {
+  const responses: Record<number, ResponseDefinition> = {};
+  const { params, query, headers, body } = operation.request;
+  const validatesBody = body !== undefined && body.documentOnly !== true;
 
-export type OpenApiDocument = ReturnType<
-  OpenApiGeneratorV31["generateDocument"]
->;
-
-/** Deterministic ordering so the generated JSON is stable across runs. */
-export function sortApiOperations(
-  operations: readonly AnyApiOperation[],
-): AnyApiOperation[] {
-  const methodOrder = (m: string): number =>
-    (API_HTTP_METHODS as readonly string[]).indexOf(m);
-  return [...operations].sort(
-    (a, b) =>
-      a.path.localeCompare(b.path) || methodOrder(a.method) - methodOrder(b.method),
-  );
-}
-
-export function buildOpenApiDocument(
-  operations: readonly AnyApiOperation[],
-  info: OpenApiDocumentInfo,
-): OpenApiDocument {
-  const registry = new OpenAPIRegistry();
-
-  registry.registerComponent("securitySchemes", BEARER_AUTH_SECURITY_SCHEME, {
-    type: "http",
-    scheme: "bearer",
-    bearerFormat: "JWT",
-    description:
-      "SchemaVaults access token. Browser sessions send it automatically as a cookie; " +
-      "other clients send `Authorization: Bearer <access token>`.",
-  });
-
-  const tags = new Set<string>();
-  for (const operation of sortApiOperations(operations)) {
-    for (const tag of operation.config.tags ?? []) tags.add(tag);
-    registry.registerPath(operation.toRouteConfig());
+  if (params || query || headers || validatesBody) {
+    responses[400] = {
+      description: "The path parameters, query string, headers or body failed validation.",
+      schema: ApiErrorResponseSchema,
+    };
   }
+  if (!isPublicOperationAuth(operation.auth)) {
+    responses[401] = {
+      description: "No credential was presented, or it is invalid or expired.",
+      schema: ApiErrorResponseSchema,
+    };
+    const { routeGuard, requiredScopes, organization } = operation.auth;
+    if (routeGuard === "admin" || (requiredScopes?.length ?? 0) > 0 || organization) {
+      responses[403] = {
+        description: "The caller is authenticated but not allowed to perform this operation.",
+        schema: ApiErrorResponseSchema,
+      };
+    }
+  }
+  if (validatesBody) {
+    responses[415] = {
+      description: `The request body is not \`${body.contentType ?? "application/json"}\`.`,
+      schema: ApiErrorResponseSchema,
+    };
+  }
+  responses[500] = {
+    description: "Unexpected server error.",
+    schema: ApiErrorResponseSchema,
+  };
+  return responses;
+}
 
-  const generator = new OpenApiGeneratorV31(registry.definitions, {
-    sortComponents: "alphabetically",
-  });
+function withRuntimeErrorResponses(operation: AnyOperationDefinition): AnyOperationDefinition {
+  return {
+    ...operation,
+    handler: operation.handler,
+    responses: { ...runtimeErrorResponses(operation), ...operation.responses },
+  };
+}
 
-  return generator.generateDocument({
-    openapi: "3.1.0",
-    info: {
-      title: info.title,
-      version: info.version,
-      ...(info.description ? { description: info.description } : {}),
-    },
-    ...(info.servers ? { servers: info.servers } : {}),
-    ...(tags.size > 0
-      ? { tags: [...tags].sort().map((name) => ({ name })) }
-      : {}),
+let cached: OpenAPIObject | undefined;
+
+export function getOpenApiDocument(): OpenAPIObject {
+  cached ??= buildOpenApiDocument({
+    ...openApiInfo,
+    operations: apiOperations.map(withRuntimeErrorResponses),
   });
+  return cached;
 }

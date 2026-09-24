@@ -22,19 +22,20 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
-    "next": "16.3.4",
+    "next": "16.3.6",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "@schemavaults/theme": "0.26.1",
-    "@schemavaults/ui": "0.99.3",
+    "@schemavaults/theme": "0.28.0",
+    "@schemavaults/ui": "0.108.0",
     "@schemavaults/dbh": "0.14.0",
-    "@schemavaults/auth-react-provider": "0.16.20",
-    "@schemavaults/auth-server-sdk": "0.28.30",
+    "@schemavaults/auth-react-provider": "0.16.37",
+    "@schemavaults/auth-server-sdk": "0.30.0",
     "server-only": "0.0.1",
     "lucide-react": "1.14.0",
-    "hono": "4.13.7",
     "zod": "4.4.3",
-    "@asteasolutions/zod-to-openapi": "9.1.0"
+    "@schemavaults/openapi-operations": "0.3.0",
+    "@schemavaults/openapi-docs-ui": "0.1.6",
+    "@schemavaults/auth-common": "0.28.0"
   },
   "devDependencies": {
     "typescript": "5.9.3",
@@ -49,7 +50,7 @@
     "globals": "16.5.0",
     "@typescript-eslint/eslint-plugin": "8.48.1",
     "@typescript-eslint/parser": "8.48.1",
-    "eslint-config-next": "16.3.4",
+    "eslint-config-next": "16.3.6",
     "cypress": "15.14.2"
   }
 }

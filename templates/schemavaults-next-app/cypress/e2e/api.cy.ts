@@ -16,8 +16,10 @@ describe("API routes and OpenAPI docs", () => {
       failOnStatusCode: false,
     }).then((response) => {
       expect(response.status).to.eq(400);
-      expect(response.body.error.code).to.eq("validation_error");
-      expect(response.body.error.issues[0].path).to.eq("query.shout");
+      expect(response.body.success).to.eq(false);
+      expect(response.body.error).to.eq("validation_error");
+      expect(response.body.issues[0].location).to.eq("query");
+      expect(response.body.issues[0].path).to.eq("shout");
     });
     cy.request({
       method: "POST",
@@ -30,11 +32,10 @@ describe("API routes and OpenAPI docs", () => {
   });
 
   it("rejects unauthenticated calls to protected operations", () => {
-    // 401 once SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY is configured; the
-    // auth guard answers 500 when the key manager has no key (e.g. in e2e).
     cy.request({ url: "/api/me", failOnStatusCode: false }).then((response) => {
-      expect(response.status).to.be.oneOf([401, 500]);
+      expect(response.status).to.eq(401);
       expect(response.body.success).to.eq(false);
+      expect(response.body.error).to.eq("unauthorized");
     });
   });
 
@@ -45,9 +46,10 @@ describe("API routes and OpenAPI docs", () => {
       expect(response.body.paths).to.have.property("/api/health");
     });
     cy.visit("/docs");
-    cy.contains("h1", "xxx_display_name_xxx");
+    cy.contains("xxx_display_name_xxx");
     cy.contains("Health check");
-    cy.get("#op-getHealth").should("exist");
-    cy.get("#schema-HealthResponse").should("exist");
+    cy.visit("/docs/get-api-health");
+    cy.contains("Health check");
+    cy.contains("/api/health");
   });
 });

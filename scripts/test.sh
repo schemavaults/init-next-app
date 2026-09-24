@@ -151,10 +151,12 @@ test -s test-app/.claude/skills/api-routes/SKILL.md
 grep -q 'name: api-routes' test-app/.claude/skills/api-routes/SKILL.md
 grep -q 'defineApiOperation' test-app/.claude/skills/api-routes/SKILL.md
 
-echo "==> Asserting the Hono/OpenAPI API scaffolding"
-test -f test-app/src/lib/api/define.ts
-test -f test-app/src/lib/api/create-api-route.ts
-test -f test-app/src/lib/api/error-response.ts
+echo "==> Asserting the OpenAPI API scaffolding"
+test -f test-app/src/lib/api/operation.ts
+test -f test-app/src/lib/api/operations.ts
+test -f test-app/src/lib/api/api.ts
+test -f test-app/src/lib/api/auth-resolvers.ts
+test -f test-app/src/lib/api/request-context.ts
 test -f test-app/src/lib/api/openapi-document.ts
 test -f test-app/src/lib/api/openapi-info.ts
 test -f test-app/scripts/generate-openapi.ts
@@ -164,17 +166,19 @@ test -f test-app/src/app/api/greet/\[name\]/operations.ts
 test -f test-app/src/app/api/greet/\[name\]/route.ts
 test -f test-app/src/app/api/me/operations.ts
 test -f test-app/src/app/api/me/route.ts
+test -f test-app/src/app/docs/api-docs.tsx
 test -f test-app/src/app/docs/page.tsx
-test -d test-app/src/components/openapi-docs
+test -f test-app/src/app/docs/\[slug\]/page.tsx
 test -f test-app/public/openapi.json
 test -f test-app/cypress/e2e/api.cy.ts
 grep -q '"title": "Test App"' test-app/public/openapi.json
 grep -q '"description": "A test project"' test-app/public/openapi.json
 grep -q '"/api/health"' test-app/public/openapi.json
+grep -q '"name": "access_token_test-api-server"' test-app/public/openapi.json
 grep -q '"openapi:generate"' test-app/package.json
 grep -q '"openapi:check"' test-app/package.json
-grep -q '"hono"' test-app/package.json
-grep -q '"@asteasolutions/zod-to-openapi"' test-app/package.json
+grep -q '"@schemavaults/openapi-operations"' test-app/package.json
+grep -q '"@schemavaults/openapi-docs-ui"' test-app/package.json
 grep -q 'openapi:check' test-app/.github/workflows/ci.yml
 
 test -f test-app/.env.example

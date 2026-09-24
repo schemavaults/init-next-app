@@ -6,6 +6,9 @@ const SCHEMAVAULTS_PACKAGES = [
   "@schemavaults/dbh",
   "@schemavaults/auth-server-sdk",
   "@schemavaults/auth-react-provider",
+  "@schemavaults/auth-common",
+  "@schemavaults/openapi-operations",
+  "@schemavaults/openapi-docs-ui",
 ] as const;
 
 export type SchemaVaultsPackageDependency =

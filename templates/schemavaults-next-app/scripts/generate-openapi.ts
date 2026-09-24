@@ -1,26 +1,30 @@
 #!/usr/bin/env bun
 /**
- * Generates `public/openapi.json` from every `src/app/api/** /operations.ts`.
+ * Writes `public/openapi.json` from the API catalogue (`src/lib/api/operations.ts`)
+ * and checks the catalogue against the route files:
  *
  *   bun run openapi:generate   # (re)write public/openapi.json
  *   bun run openapi:check      # exit 1 if public/openapi.json is stale
  *
- * Discovery is by convention: each `operations.ts` exports one or more
- * `defineApiOperation(...)` values and sits next to the `route.ts` that
- * implements them. The script also verifies that every operation's `path`
- * matches its directory (`src/app/api/items/[id]` <-> `/api/items/{id}`) and
- * that operationIds and method+path pairs are unique.
+ * Every operation exported from a `src/app/api/** /operations.ts` must be in
+ * the catalogue, declare the path its directory serves
+ * (`src/app/api/items/[id]` <-> `/api/items/{id}`) and have a sibling
+ * `route.ts`; every catalogue entry must come from such a file.
  */
-import { existsSync, readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { ApiOperation, type AnyApiOperation } from "../src/lib/api/define";
-import { buildOpenApiDocument } from "../src/lib/api/openapi-document";
-import { openApiInfo } from "../src/lib/api/openapi-info";
+import {
+  assertUniqueOperations,
+  type AnyOperationDefinition,
+} from "@schemavaults/openapi-operations";
+import { getOpenApiDocument } from "../src/lib/api/openapi-document";
+import { apiOperations } from "../src/lib/api/operations";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const appDir = join(projectRoot, "src", "app");
 const apiDir = join(appDir, "api");
+const catalogueFile = "src/lib/api/operations.ts";
 const outputFile = join(projectRoot, "public", "openapi.json");
 const OPERATIONS_FILE = "operations.ts";
 const ROUTE_FILE = "route.ts";
@@ -41,23 +45,16 @@ function findOperationFiles(dir: string): string[] {
   const found: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      found.push(...findOperationFiles(full));
-    } else if (entry.name === OPERATIONS_FILE) {
-      found.push(full);
-    }
+    if (entry.isDirectory()) found.push(...findOperationFiles(full));
+    else if (entry.name === OPERATIONS_FILE) found.push(full);
   }
   return found.sort();
 }
 
-/**
- * Map a route directory to the OpenAPI path it serves:
- * route groups `(group)` are dropped, `[param]` becomes `{param}`.
- */
+/** Route directory -> OpenAPI path: `(group)` dropped, `[param]` -> `{param}`. */
 function expectedPathForDirectory(dir: string): string | null {
-  const segments = relative(appDir, dir).split(sep).filter(Boolean);
   const out: string[] = [];
-  for (const segment of segments) {
+  for (const segment of relative(appDir, dir).split(sep).filter(Boolean)) {
     if (segment.startsWith("(") && segment.endsWith(")")) continue;
     if (segment.startsWith("[...") || segment.startsWith("[[...")) return null;
     const param = /^\[([^\]]+)\]$/.exec(segment);
@@ -66,8 +63,20 @@ function expectedPathForDirectory(dir: string): string | null {
   return `/${out.join("/")}`;
 }
 
-async function loadOperations(): Promise<AnyApiOperation[]> {
-  const operations: AnyApiOperation[] = [];
+function isOperationDefinition(value: unknown): value is AnyOperationDefinition {
+  if (typeof value !== "object" || value === null) return false;
+  const candidate = value as Partial<AnyOperationDefinition>;
+  return (
+    typeof candidate.method === "string" &&
+    typeof candidate.path === "string" &&
+    typeof candidate.operationId === "string" &&
+    typeof candidate.handler === "function"
+  );
+}
+
+async function checkRouteFiles(): Promise<void> {
+  const catalogue = new Map(apiOperations.map((operation) => [operation.operationId, operation]));
+  const discovered = new Set<string>();
   const files = findOperationFiles(apiDir);
 
   if (files.length === 0) {
@@ -78,9 +87,8 @@ async function loadOperations(): Promise<AnyApiOperation[]> {
     const directory = dirname(file);
     const label = rel(file);
 
-    const routeFile = join(directory, ROUTE_FILE);
-    if (!existsSync(routeFile)) {
-      problem(`${label}: no sibling ${ROUTE_FILE} implements these operations`);
+    if (!existsSync(join(directory, ROUTE_FILE))) {
+      problem(`${label}: no sibling ${ROUTE_FILE} serves these operations`);
     }
 
     const expectedPath = expectedPathForDirectory(directory);
@@ -97,45 +105,47 @@ async function loadOperations(): Promise<AnyApiOperation[]> {
       continue;
     }
 
-    const exported = Object.entries(mod).filter(([, value]) =>
-      ApiOperation.isApiOperation(value),
-    ) as Array<[string, AnyApiOperation]>;
-
+    const exported = Object.entries(mod).filter(([, value]) => isOperationDefinition(value)) as Array<
+      [string, AnyOperationDefinition]
+    >;
     if (exported.length === 0) {
       problem(`${label}: exports no operations (export the result of defineApiOperation())`);
       continue;
     }
 
     for (const [exportName, operation] of exported) {
+      const id = operation.operationId;
       if (operation.path !== expectedPath) {
         problem(
-          `${label}: export '${exportName}' (${operation.operationId}) declares path '${operation.path}' ` +
+          `${label}: export '${exportName}' (${id}) declares path '${operation.path}' ` +
             `but its directory maps to '${expectedPath}'`,
         );
       }
-      operations.push(operation);
+      if (!catalogue.has(id)) {
+        problem(`${label}: export '${exportName}' (${id}) is not listed in ${catalogueFile}`);
+      }
+      discovered.add(id);
     }
   }
 
-  const byOperationId = new Map<string, number>();
-  const byMethodPath = new Map<string, number>();
-  for (const operation of operations) {
-    byOperationId.set(operation.operationId, (byOperationId.get(operation.operationId) ?? 0) + 1);
-    const key = `${operation.method.toUpperCase()} ${operation.path}`;
-    byMethodPath.set(key, (byMethodPath.get(key) ?? 0) + 1);
-  }
-  for (const [id, count] of byOperationId) {
-    if (count > 1) problem(`operationId '${id}' is defined ${count} times; operationIds must be unique`);
-  }
-  for (const [key, count] of byMethodPath) {
-    if (count > 1) problem(`${key} is defined ${count} times`);
+  for (const id of catalogue.keys()) {
+    if (!discovered.has(id)) {
+      problem(
+        `${catalogueFile}: '${id}' is not exported by any src/app/api/**/${OPERATIONS_FILE}; ` +
+          `define operations next to the route.ts that serves them`,
+      );
+    }
   }
 
-  return operations;
+  try {
+    assertUniqueOperations(apiOperations);
+  } catch (error) {
+    problem(error instanceof Error ? error.message : String(error));
+  }
 }
 
 async function main(): Promise<void> {
-  const operations = await loadOperations();
+  await checkRouteFiles();
 
   if (problems.length > 0) {
     console.error("OpenAPI generation failed:");
@@ -143,19 +153,17 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const document = buildOpenApiDocument(operations, openApiInfo);
-  const json = `${JSON.stringify(document, null, 2)}\n`;
+  const json = `${JSON.stringify(getOpenApiDocument(), null, 2)}\n`;
   const existing = existsSync(outputFile) ? readFileSync(outputFile, "utf8") : null;
+  const paths = new Set(apiOperations.map((operation) => operation.path)).size;
 
   if (checkOnly) {
     if (existing === json) {
-      console.log(`${rel(outputFile)} is up to date (${operations.length} operations).`);
+      console.log(`${rel(outputFile)} is up to date (${apiOperations.length} operations).`);
       return;
     }
     console.error(
-      existing === null
-        ? `${rel(outputFile)} does not exist.`
-        : `${rel(outputFile)} is out of date.`,
+      existing === null ? `${rel(outputFile)} does not exist.` : `${rel(outputFile)} is out of date.`,
     );
     console.error("Run `bun run openapi:generate` and commit the result.");
     process.exit(1);
@@ -165,7 +173,7 @@ async function main(): Promise<void> {
   writeFileSync(outputFile, json, "utf8");
   console.log(
     `${existing === json ? "Unchanged" : "Wrote"} ${rel(outputFile)}: ` +
-      `${operations.length} operations from ${new Set(operations.map((o) => o.path)).size} paths.`,
+      `${apiOperations.length} operations across ${paths} paths.`,
   );
 }
 

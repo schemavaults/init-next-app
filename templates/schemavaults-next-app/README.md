@@ -60,28 +60,34 @@ Generate auth SDK code.
 
 ### API routes and OpenAPI
 
-Every endpoint under `src/app/api/` is its own [Hono](https://hono.dev) app,
-defined with zod schemas via
-[`@asteasolutions/zod-to-openapi`](https://github.com/asteasolutions/zod-to-openapi)
-so requests are validated at runtime and documented automatically:
+Every endpoint under `src/app/api/` is defined once with
+[`@schemavaults/openapi-operations`](https://www.npmjs.com/package/@schemavaults/openapi-operations)
+(zod request/response schemas, auth requirements and the handler in one
+definition) and served as its own [Hono](https://hono.dev) app from the
+Next.js `route.ts` next to it:
 
-- `src/app/api/<path>/operations.ts` — `defineApiOperation()` definitions
-  (method, path, schemas, access level, responses).
-- `src/app/api/<path>/route.ts` — `createApiRoute(operation.implement(handler), …)`
-  exports the Next.js `GET`/`POST`/… handlers.
-- `public/openapi.json` — generated from every `operations.ts`; served at
-  [`/openapi.json`](http://localhost:3000/openapi.json) and rendered at
-  [`/docs`](http://localhost:3000/docs) without any external UI dependency.
+- `src/app/api/<path>/operations.ts` — `defineApiOperation()` definitions.
+- `src/lib/api/operations.ts` — the catalogue every route file and the OpenAPI
+  document are built from.
+- `src/app/api/<path>/route.ts` — `export const { GET } = apiRoute([getThing])`.
+- `public/openapi.json` — generated from the catalogue; served at
+  [`/openapi.json`](http://localhost:3000/openapi.json).
+- [`/docs`](http://localhost:3000/docs) — the document rendered live by
+  [`@schemavaults/openapi-docs-ui`](https://www.npmjs.com/package/@schemavaults/openapi-docs-ui):
+  an index of every route plus one page per operation with parameters,
+  schemas, auth requirements and a curl example.
 
 ```bash
 bun run openapi:generate   # rewrite public/openapi.json (also runs on `bun run dev`)
 bun run openapi:check      # fail if it is stale (runs in `bun run lint` and CI)
 ```
 
-Example endpoints ship in `src/app/api/health`, `src/app/api/greet/[name]`
-and `src/app/api/me`; delete them once you have real routes and regenerate.
-The `api-routes` Claude Code skill in `.claude/skills/` documents the full
-workflow for coding agents.
+Protected operations accept the SchemaVaults access token as a bearer header
+or the first-party cookie; verification (`src/lib/api/auth-resolvers.ts`)
+needs `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` at runtime. Example endpoints
+ship in `src/app/api/health`, `src/app/api/greet/[name]` and `src/app/api/me`;
+delete them once you have real routes and regenerate. The `api-routes`
+Claude Code skill in `.claude/skills/` documents the full workflow.
 
 ### Database Migrations
 
@@ -111,5 +117,6 @@ more Claude Code skills in `.claude/skills/`:
 - `nextjs-docs` points coding agents at the version-matched Next.js
   documentation bundled with the installed `next` package
   (`node_modules/next/dist/docs/`).
-- `api-routes` explains how to add API endpoints that are validated with zod,
-  served by Hono and registered in `public/openapi.json` / `/docs`.
+- `api-routes` explains how to add API endpoints with
+  `@schemavaults/openapi-operations` so they are validated, served by Hono and
+  registered in `public/openapi.json` / `/docs`.

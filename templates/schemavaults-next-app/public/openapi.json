@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "xxx_display_name_xxx",
-    "version": "0.0.1",
-    "description": "xxx_description_xxx"
+    "description": "xxx_description_xxx",
+    "version": "0.0.1"
   },
   "servers": [
     {
@@ -13,78 +13,59 @@
   ],
   "tags": [
     {
-      "name": "Account"
+      "name": "System",
+      "description": "Health and diagnostics."
     },
     {
-      "name": "Examples"
+      "name": "Account",
+      "description": "The authenticated user."
     },
     {
-      "name": "System"
+      "name": "Examples",
+      "description": "Sample operations scaffolded with the project; delete once you have real routes."
     }
   ],
   "components": {
     "securitySchemes": {
-      "bearerAuth": {
+      "schemavaults-access-token": {
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "SchemaVaults access token. Browser sessions send it automatically as a cookie; other clients send `Authorization: Bearer <access token>`."
+        "description": "Access token issued by the SchemaVaults auth server for this API server.",
+        "x-schemavaults-title": "SchemaVaults access token (Bearer)",
+        "x-schemavaults-challenge": "Bearer realm=\"schemavaults\""
+      },
+      "schemavaults-access-token-cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "access_token_xxx_api_server_id_xxx",
+        "description": "First-party access token cookie set by the SchemaVaults auth flow.",
+        "x-schemavaults-title": "SchemaVaults access token (cookie)"
       }
     },
     "schemas": {
-      "ApiErrorIssue": {
+      "HealthResponse": {
         "type": "object",
         "properties": {
-          "path": {
+          "status": {
             "type": "string",
-            "description": "Dotted location of the invalid value, prefixed with `params`, `query` or `body`.",
-            "example": "body.email"
+            "enum": [
+              "ok"
+            ]
           },
-          "message": {
+          "timestamp": {
             "type": "string",
-            "example": "Invalid email address"
+            "format": "date-time",
+            "description": "Server time when the check ran (ISO 8601).",
+            "example": "2025-01-01T00:00:00.000Z"
           }
         },
         "required": [
-          "path",
-          "message"
+          "status",
+          "timestamp"
         ]
       },
       "ApiErrorResponse": {
-        "type": "object",
-        "properties": {
-          "error": {
-            "type": "object",
-            "properties": {
-              "code": {
-                "type": "string",
-                "description": "Machine-readable error code, e.g. `validation_error`, `invalid_json`, `not_found`, `conflict`, `internal_error`.",
-                "example": "validation_error"
-              },
-              "message": {
-                "type": "string",
-                "example": "Request validation failed"
-              },
-              "issues": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/ApiErrorIssue"
-                },
-                "description": "Present for `validation_error` responses."
-              }
-            },
-            "required": [
-              "code",
-              "message"
-            ]
-          }
-        },
-        "required": [
-          "error"
-        ],
-        "description": "Error envelope returned by every API operation."
-      },
-      "AuthErrorResponse": {
         "type": "object",
         "properties": {
           "success": {
@@ -94,22 +75,81 @@
             ]
           },
           "error": {
-            "type": "boolean",
-            "enum": [
-              true
-            ]
+            "type": "string",
+            "description": "Machine-readable error code.",
+            "example": "validation_error"
           },
           "message": {
             "type": "string",
-            "example": "Authentication failed, no token sources found for request"
+            "example": "Request validation failed"
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApiErrorIssue"
+            },
+            "description": "Present on `validation_error` responses."
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {},
+            "description": "Extra machine-readable details (e.g. missing scopes)."
           }
         },
         "required": [
           "success",
           "error",
           "message"
-        ],
-        "description": "Returned by the SchemaVaults auth guard when the caller is not authenticated or not authorized."
+        ]
+      },
+      "ApiErrorIssue": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "type": "string",
+            "enum": [
+              "params",
+              "query",
+              "headers",
+              "body"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "example": "greeting"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid input: expected string, received undefined"
+          },
+          "code": {
+            "type": "string",
+            "example": "invalid_type"
+          }
+        },
+        "required": [
+          "location",
+          "path",
+          "message",
+          "code"
+        ]
+      },
+      "Greeting": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "example": "Hello, Ada!"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ada"
+          }
+        },
+        "required": [
+          "message",
+          "name"
+        ]
       },
       "CreateGreetingRequest": {
         "type": "object",
@@ -151,7 +191,7 @@
           },
           "admin": {
             "type": "boolean",
-            "description": "Whether the user is an administrator."
+            "description": "Whether the user is a platform administrator."
           }
         },
         "required": [
@@ -159,49 +199,51 @@
           "email",
           "admin"
         ]
-      },
-      "Greeting": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "example": "Hello, Ada!"
-          },
-          "name": {
-            "type": "string",
-            "example": "Ada"
-          }
-        },
-        "required": [
-          "message",
-          "name"
-        ]
-      },
-      "HealthResponse": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "ok"
-            ]
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Server time when the check ran (ISO 8601).",
-            "example": "2025-01-01T00:00:00.000Z"
-          }
-        },
-        "required": [
-          "status",
-          "timestamp"
-        ]
       }
     },
     "parameters": {}
   },
   "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "getHealth",
+        "summary": "Health check",
+        "description": "Liveness probe for load balancers and uptime monitors.",
+        "tags": [
+          "System"
+        ],
+        "security": [],
+        "x-schemavaults-auth": {
+          "public": true,
+          "schemes": [],
+          "routeGuard": null,
+          "requiredScopes": [],
+          "organization": null
+        },
+        "responses": {
+          "200": {
+            "description": "The service is up.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/greet/{name}": {
       "get": {
         "operationId": "getGreeting",
@@ -210,6 +252,14 @@
         "tags": [
           "Examples"
         ],
+        "security": [],
+        "x-schemavaults-auth": {
+          "public": true,
+          "schemes": [],
+          "routeGuard": null,
+          "requiredScopes": [],
+          "organization": null
+        },
         "parameters": [
           {
             "schema": {
@@ -266,7 +316,7 @@
             }
           },
           "400": {
-            "description": "The path parameters, query string or JSON body failed validation.",
+            "description": "The path parameters, query string, headers or body failed validation.",
             "content": {
               "application/json": {
                 "schema": {
@@ -293,6 +343,14 @@
         "tags": [
           "Examples"
         ],
+        "security": [],
+        "x-schemavaults-auth": {
+          "public": true,
+          "schemes": [],
+          "routeGuard": null,
+          "requiredScopes": [],
+          "organization": null
+        },
         "parameters": [
           {
             "schema": {
@@ -309,8 +367,8 @@
           }
         ],
         "requestBody": {
-          "description": "How to greet the named person.",
           "required": true,
+          "description": "How to greet the named person.",
           "content": {
             "application/json": {
               "schema": {
@@ -331,7 +389,7 @@
             }
           },
           "400": {
-            "description": "The path parameters, query string or JSON body failed validation.",
+            "description": "The path parameters, query string, headers or body failed validation.",
             "content": {
               "application/json": {
                 "schema": {
@@ -340,34 +398,12 @@
               }
             }
           },
-          "500": {
-            "description": "Unexpected server error.",
+          "415": {
+            "description": "The request body is not `application/json`.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/health": {
-      "get": {
-        "operationId": "getHealth",
-        "summary": "Health check",
-        "description": "Liveness probe for load balancers and uptime monitors. Always public.",
-        "tags": [
-          "System"
-        ],
-        "responses": {
-          "200": {
-            "description": "The service is up.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HealthResponse"
                 }
               }
             }
@@ -394,9 +430,22 @@
         ],
         "security": [
           {
-            "bearerAuth": []
+            "schemavaults-access-token": []
+          },
+          {
+            "schemavaults-access-token-cookie": []
           }
         ],
+        "x-schemavaults-auth": {
+          "public": false,
+          "schemes": [
+            "schemavaults-access-token",
+            "schemavaults-access-token-cookie"
+          ],
+          "routeGuard": "authenticated",
+          "requiredScopes": [],
+          "organization": null
+        },
         "responses": {
           "200": {
             "description": "The caller's profile.",
@@ -409,11 +458,11 @@
             }
           },
           "401": {
-            "description": "Missing, expired or invalid access token.",
+            "description": "No credential was presented, or it is invalid or expired.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AuthErrorResponse"
+                  "$ref": "#/components/schemas/ApiErrorResponse"
                 }
               }
             }

@@ -1,8 +1,4 @@
-import { createApiRoute } from "@/lib/api/create-api-route";
+import { apiRoute } from "@/lib/api/api";
 import { getHealth } from "./operations";
 
-export const { GET } = createApiRoute(
-  getHealth.implement(async ({ reply }) =>
-    reply(200, { status: "ok", timestamp: new Date().toISOString() }),
-  ),
-);
+export const { GET } = apiRoute([getHealth]);

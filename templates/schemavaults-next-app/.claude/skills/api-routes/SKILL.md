@@ -1,48 +1,59 @@
 ---
 name: api-routes
-description: Use when adding, changing or removing an HTTP API endpoint under src/app/api — a new route, a new method on an existing route, request/response schema changes, auth requirements — or when public/openapi.json or /docs is stale. Every endpoint is a Hono app defined with zod schemas via @asteasolutions/zod-to-openapi so it is validated at runtime and documented in openapi.json automatically.
+description: Use when adding, changing or removing an HTTP API endpoint under src/app/api — a new route, a new method on an existing route, request/response schema or auth changes — or when public/openapi.json or /docs is stale. Endpoints are defined with @schemavaults/openapi-operations (zod schemas + auth + handler in one definition), served as one Hono app per Next.js route.ts, documented in openapi.json and rendered at /docs by @schemavaults/openapi-docs-ui.
 ---
 
-# API routes (Hono + zod + OpenAPI)
+# API routes (`@schemavaults/openapi-operations` + `@schemavaults/openapi-docs-ui`)
 
 Every API endpoint in this project is:
 
-1. **Defined** once, with zod schemas, in `src/app/api/<path>/operations.ts`
-   using `defineApiOperation()` from `@/lib/api/define`.
-2. **Implemented** in the sibling `src/app/api/<path>/route.ts` with
-   `createApiRoute()` from `@/lib/api/create-api-route`, which builds **one
-   Hono app per Next.js route** and exports the `GET`/`POST`/… handlers.
-3. **Documented** in `public/openapi.json`, generated from every
-   `operations.ts` by `bun run openapi:generate`. `/openapi.json` serves the
-   file and `/docs` renders it (no external UI dependencies).
+1. **Defined once** — method, path, zod request/response schemas, auth
+   requirements and the handler — in `src/app/api/<path>/operations.ts` with
+   `defineApiOperation()` from `@/lib/api/operation`.
+2. **Registered** in the catalogue `src/lib/api/operations.ts`.
+3. **Served** by the sibling `src/app/api/<path>/route.ts`, which exports
+   `apiRoute([...])` from `@/lib/api/api` — one Hono app per Next.js route.
+4. **Documented** in `public/openapi.json` (served at `/openapi.json`), generated
+   from the catalogue by `bun run openapi:generate`, and browsable at `/docs`
+   (index) and `/docs/<slug>` (one page per operation), rendered live from the
+   same catalogue by `@schemavaults/openapi-docs-ui`.
 
-The definitions are pure (no `server-only`, no database, no auth SDK at
-runtime), which is what lets a bun script import them to produce the document.
-Never put server-side imports in `operations.ts`; they belong in `route.ts`.
+The runtime (`@schemavaults/openapi-operations`) resolves credentials, enforces
+the route guard / scopes / organization role, validates params, query, headers
+and body against the schemas (400, 415), and calls the handler with typed input.
 
 ## Adding an endpoint — checklist
 
-1. Pick the URL. It must live under `/api/` and use OpenAPI-style path
-   parameters: `/api/items/{id}`. The directory mirrors it with Next.js
-   conventions: `src/app/api/items/[id]/`. Route groups `(group)` are ignored;
-   catch-all segments are not supported.
+1. Pick the URL under `/api/` with OpenAPI-style parameters: `/api/items/{id}`.
+   The directory mirrors it in Next.js form: `src/app/api/items/[id]/`. Route
+   groups `(group)` are ignored; catch-all segments are not supported.
 2. Create `src/app/api/items/[id]/operations.ts` exporting one
-   `defineApiOperation()` per HTTP method (see the template below).
-3. Create `src/app/api/items/[id]/route.ts` and implement every operation:
-   `export const { GET, DELETE } = createApiRoute(getItem.implement(...), deleteItem.implement(...))`.
-4. Run `bun run openapi:generate` (rewrites `public/openapi.json`) and commit
-   the JSON together with the code. `bun run lint` and CI run
-   `bun run openapi:check`, which fails when the file is stale.
-5. Verify: `bun run typecheck && bun run lint`, then check the endpoint on
-   `/docs` (or `curl`) with `bun run dev` (dev regenerates the document on start).
+   `defineApiOperation()` per HTTP method (template below).
+3. Add each export to the `apiOperations` array in `src/lib/api/operations.ts`.
+4. Create `src/app/api/items/[id]/route.ts`:
+   `export const { GET, DELETE } = apiRoute([getItem, deleteItem]);`
+5. Run `bun run openapi:generate` and commit `public/openapi.json` with the code.
+   `bun run lint` and CI run `bun run openapi:check`, which fails when the file
+   is stale, when an operation is missing from the catalogue, when a
+   catalogue entry is not exported by any `operations.ts`, or when a path does
+   not match its directory.
+6. Verify with `bun run typecheck && bun run lint`, then open `/docs` with
+   `bun run dev` (dev regenerates the document on start).
 
-Removing an endpoint: delete the directory, then run `bun run openapi:generate`.
+Removing an endpoint: delete the directory, remove its entries from the
+catalogue, run `bun run openapi:generate`.
 
 ## `operations.ts` template
 
 ```ts
-import { defineApiOperation, z } from "@/lib/api/define";
-import { ApiErrorResponseSchema } from "@/lib/api/error-response";
+import {
+  ApiErrorResponseSchema,
+  OperationError,
+  authenticatedAccess,   // or adminAccess(), publicAccess()
+  defineApiOperation,
+  requireUser,
+  z,
+} from "@/lib/api/operation";
 
 // Name reusable schemas with .openapi("Name") so they become
 // components.schemas entries (and $refs) instead of being inlined.
@@ -60,117 +71,139 @@ export const getItem = defineApiOperation({
   operationId: "getItem",        // unique across the API; camelCase verb+noun
   summary: "Get an item",
   description: "Longer explanation shown on /docs (optional).",
-  tags: ["Items"],               // first tag groups the operation on /docs
-  access: "authenticated",       // "public" (default) | "authenticated" | "admin"
+  tags: ["Items"],               // groups the operation on /docs
+  auth: authenticatedAccess(),   // see "Authentication" below
   request: {
-    params: z.object({ id: z.uuid() }),            // keys must equal the {placeholders}
-    query: z.object({                              // values arrive as strings
+    params: z.object({ id: z.uuid() }),      // keys must equal the {placeholders}
+    query: z.object({                        // strings, or string[] for repeated keys
       expand: z.enum(["true", "false"]).default("false").transform((v) => v === "true"),
       limit: z.coerce.number().int().min(1).max(100).default(20),
     }),
-    // body: z.object({ ... }).openapi("UpdateItemRequest"),   // JSON body
-    // bodyDescription: "What to change.",
+    // headers: z.object({ "x-request-id": z.string().optional() }),   // lower-case keys
+    // body: {                                                          // POST/PUT/PATCH/DELETE
+    //   schema: z.object({ name: z.string() }).openapi("UpdateItemRequest"),
+    //   description: "What to change.",
+    //   lenientContentType: true,   // also accept text/plain / no Content-Type as JSON
+    // },
   },
   responses: {
     200: { description: "The item.", schema: ItemSchema },
     404: { description: "No such item.", schema: ApiErrorResponseSchema },
-    // 204: { description: "Deleted." },   // no schema => empty body
+    // 204: { description: "Deleted." },   // no schema => use ctx.empty(204)
+  },
+  handler: async (ctx) => {
+    // ctx.params / ctx.query / ctx.headers / ctx.body are validated and typed.
+    // ctx.auth is the AuthPrincipal (null on publicAccess() operations).
+    // ctx.context is the per-request ApiRequestContext: `ctx.context.dbh`
+    // (lazily opened Kysely handle) and `ctx.context.environment`.
+    const user = requireUser(ctx.auth);
+    const item = await loadItem(ctx.context.dbh, ctx.params.id, user.uid);
+    if (!item) {
+      throw new OperationError(404, { error: "not_found", message: "No such item" });
+    }
+    return ctx.json(200, item);   // status + body are type-checked against `responses`
   },
 });
 ```
 
-Every operation automatically documents `400` (when it declares any
-request schema), `401` (when `access` is not `public`), `403` (when `access`
-is `admin`) and `500`. Declare other statuses you return yourself.
+The document automatically lists `400` (when the operation validates
+anything), `401` (protected operations), `403` (admin guard, required scopes
+or organization role), `415` (operations with a body) and `500`. Declare the
+other statuses you return yourself, with `ApiErrorResponseSchema` for errors.
 
 ## `route.ts` template
 
 ```ts
-import { createApiRoute } from "@/lib/api/create-api-route";
-import { ApiError } from "@/lib/api/error-response";
-import { ServerlessDatabase } from "@/db/serverless-database";
-import { getItem, deleteItem } from "./operations";
+import { apiRoute } from "@/lib/api/api";
+import { deleteItem, getItem } from "./operations";
 
-export const { GET, DELETE } = createApiRoute(
-  getItem.implement(async ({ params, query, auth, reply }) => {
-    // params/query/body are already validated and typed from the schemas.
-    // auth is null for public operations, otherwise { user, environment, isUserInOrganization }.
-    await using dbh = ServerlessDatabase.createDBH();
-    const item = await loadItem(dbh, params.id, auth.user.uid, query.expand);
-    if (!item) throw new ApiError(404, "not_found", "No such item");
-    return reply(200, item);          // only declared statuses/bodies type-check
-  }),
-
-  deleteItem.implement(async ({ params, reply }) => {
-    await remove(params.id);
-    return reply(204);
-  }),
-);
+export const { GET, DELETE } = apiRoute([getItem, deleteItem]);
 ```
 
-Rules enforced at startup or by types:
+`apiRoute()` builds a Hono app for exactly these operations from the shared
+factory (`api` in `src/lib/api/api.ts`) and exports only the methods they
+declare, so Next.js answers 405 for the rest. It throws at module load if an
+operation is not in the catalogue. Never put server-only imports in
+`operations.ts` (they belong in `route.ts` or behind `ctx.context`): the
+OpenAPI generator imports `operations.ts` under bun.
 
-- All operations passed to one `createApiRoute()` must share the same `path`
-  (a `route.ts` serves exactly one path), and each method at most once.
-- `reply(status, body)` accepts only statuses declared in `responses`, with a
-  body matching that status's schema. In development the body is also
-  validated at runtime and a mismatch throws, so schema drift is caught early.
-- Throw `ApiError(status, code, message)` for expected failures; anything else
-  thrown becomes a `500` `internal_error` and is logged.
-- For streaming, redirects, cookies or non-JSON responses use the Hono
-  context `c` from the handler arguments and return its `Response` directly.
+## Handler context
+
+| Field | Meaning |
+| --- | --- |
+| `ctx.params`, `ctx.query`, `ctx.headers`, `ctx.body` | Validated, typed input (`{}` / `undefined` when not declared) |
+| `ctx.auth` | `AuthPrincipal` (`user`, `isAdmin`, `scope`, `getOrganizationRole`) or `null` for public operations; `requireUser(ctx.auth)` narrows to `UserData` |
+| `ctx.context` | `ApiRequestContext`: `dbh` (lazy `ServerlessDatabase`), `environment`; disposed after the response |
+| `ctx.request`, `ctx.url` | The raw request |
+| `ctx.json(status, body, init?)` | Typed JSON response for a declared status |
+| `ctx.empty(status)` | Body-less response for a declared status without a schema |
+| `ctx.redirect(location, status?)` | Redirect |
+
+Throw `new OperationError(status, { error, message, details? })` for expected
+failures. Anything else thrown becomes a `500` `internal_server_error`, logged
+via the factory's `onError`. Error envelope for every error response:
+`{ "success": false, "error": "<code>", "message": "...", "issues"?: [...] }`
+(`ApiErrorResponseSchema`).
 
 ## Authentication
 
-`access: "authenticated"` / `"admin"` wraps the handler with the SchemaVaults
-auth route guards (`withAuthenticatedApiRouteGuard` / `withAdminApiRouteGuard`
-from `@schemavaults/auth-server-sdk/route_guards`). The guard accepts the
-access-token cookie set by the app's own login flow or an
-`Authorization: Bearer <access token>` header, and answers `401`/`403`
-itself before the handler runs. The OpenAPI document marks these operations
-with the `bearerAuth` security scheme.
+- `publicAccess()` — no credentials.
+- `authenticatedAccess(options?)` — any signed-in SchemaVaults user.
+- `adminAccess(options?)` — platform administrators only.
+- `options`: `{ requiredScopes: ["email"], organization: { parameter: "organization_id", roles: ["owner", "admin"] }, notes }`.
+
+Protected operations accept the SchemaVaults access token either as
+`Authorization: Bearer <access token>` or as the first-party access-token
+cookie set by this app's login flow (`src/lib/api/operation.ts`,
+`schemaVaultsAuthSchemes`). Verification lives in
+`src/lib/api/auth-resolvers.ts`: it uses `@schemavaults/auth-server-sdk`'s
+`RouteGuardFactory` (remote JWKS), so `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY`
+and `SCHEMAVAULTS_AUTH_SERVER_URL` must be set at runtime; without the key the
+resolver answers `500` rather than accepting anything. The docs pages show the
+accepted schemes, route guard, scopes and organization role per operation.
 
 ## Conventions
 
-- `operationId`: unique, camelCase, verb + noun (`listItems`, `createItem`,
-  `getItem`, `updateItem`, `deleteItem`). The generator fails on duplicates.
-- Use `.openapi("Name")` on request/response object schemas that are reused
-  or worth naming; use `.openapi({ description, example })` on fields so
-  `/docs` shows meaningful examples.
-- Query and path values are strings: use `z.coerce.number()`,
-  `z.enum(["true","false"]).transform(...)`, etc. For repeated query keys read
-  `c.req.queries("key")` from the Hono context.
-- Request bodies are `application/json` only.
-- Error envelope: `{ "error": { "code", "message", "issues?" } }`
-  (`ApiErrorResponseSchema`). Auth failures use the guard's shape
-  (`AuthErrorResponseSchema`).
-- Document metadata (title, description, servers) lives in
+- `operationId`: unique, camelCase verb + noun (`listItems`, `createItem`,
+  `getItem`, `updateItem`, `deleteItem`).
+- Use `.openapi("Name")` on request/response object schemas worth naming and
+  `.openapi({ description, example })` on fields so `/docs` shows examples.
+  For schemas built by other packages use `withOpenApi(schema, "Name")`.
+- Query and path values are strings: `z.coerce.number()`,
+  `z.enum(["true","false"]).transform(...)`, etc.
+- Request bodies default to `application/json`; set `contentType` for form
+  bodies, `lenientContentType: true` for browser `fetch` callers that omit
+  the header, `documentOnly: true` to parse the body yourself.
+- Document metadata (title, description, servers, tag descriptions) lives in
   `src/lib/api/openapi-info.ts`; the version comes from `package.json`.
 
 ## Files
 
 | Path | Purpose |
 | --- | --- |
-| `src/lib/api/define.ts` | `defineApiOperation`, `ApiOperation`, `z` (with `.openapi()`), handler/context types |
-| `src/lib/api/create-api-route.ts` | `createApiRoute` — Hono app per route, validation, auth guard, error handling |
-| `src/lib/api/error-response.ts` | `ApiError`, `ApiErrorResponseSchema`, `AuthErrorResponseSchema`, response builders |
-| `src/lib/api/openapi-document.ts` | Builds the OpenAPI 3.1 document from operations (zod-to-openapi registry/generator) |
-| `src/lib/api/openapi-info.ts` | Title/description/version/servers of the document |
-| `scripts/generate-openapi.ts` | Discovers `src/app/api/**/operations.ts`, validates paths/ids, writes or checks `public/openapi.json` |
-| `public/openapi.json` | The committed document; served at `/openapi.json` |
-| `src/app/docs/page.tsx` + `src/components/openapi-docs/` | `/docs`, a dependency-free renderer of the document |
+| `src/lib/api/operation.ts` | `defineApiOperation`, `publicAccess`/`authenticatedAccess`/`adminAccess`, `requireUser`, `ApiErrorResponseSchema`, `z`, `OperationError` |
+| `src/lib/api/operations.ts` | The catalogue: every operation, in one array |
+| `src/lib/api/api.ts` | `createOperationsAppFactory` bound to the catalogue, resolvers and context; `apiRoute()` |
+| `src/lib/api/auth-resolvers.ts` | Verifies bearer / cookie access tokens via `@schemavaults/auth-server-sdk` |
+| `src/lib/api/request-context.ts` | `ApiRequestContext` (`dbh`, `environment`) built and disposed per request |
+| `src/lib/api/openapi-document.ts` | `getOpenApiDocument()` — `buildOpenApiDocument` over the catalogue plus the runtime's error responses |
+| `src/lib/api/openapi-info.ts` | `info`, `servers`, `tags` of the document |
+| `scripts/generate-openapi.ts` | Writes/checks `public/openapi.json`; cross-checks catalogue ↔ `operations.ts` files ↔ directories |
+| `src/app/docs/api-docs.tsx`, `page.tsx`, `[slug]/page.tsx` | `/docs` via `createApiDocsPages` from `@schemavaults/openapi-docs-ui/nextjs` |
 | `src/app/api/health`, `src/app/api/greet/[name]`, `src/app/api/me` | Examples: public, params/query/body, authenticated |
 
 ## Troubleshooting
 
 - **`openapi:check` fails in CI** — run `bun run openapi:generate` locally and
   commit `public/openapi.json`.
-- **"declares path X but its directory maps to Y"** — the `path` in
-  `defineApiOperation` must match the directory (`[id]` ↔ `{id}`).
-- **"request.params must declare exactly the path parameters"** — the
-  `params` zod object keys must equal the `{placeholders}` in `path`.
-- **"reply(…) is not declared"** — add the status to `responses`.
-- **`operations.ts` fails to import in the generator** — it imports something
-  server-only; move that import to `route.ts`.
-- For Next.js route handler semantics (caching, `dynamic`, runtime) consult
-  the `nextjs-docs` skill.
+- **"is not listed in src/lib/api/operations.ts"** — add the export to the
+  catalogue.
+- **"declares path X but its directory maps to Y"** — `path` must match the
+  directory (`[id]` ↔ `{id}`).
+- **`apiRoute()` throws "not part of the catalogue"** — same fix: register it.
+- **415 from browser `fetch`** — the caller omitted `Content-Type:
+  application/json`; either set it or add `lenientContentType: true`.
+- **`/api/me` answers 500 "Authentication is not configured"** — set
+  `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` (see `.env.example`).
+- For Next.js route handler semantics (caching, runtime) consult the
+  `nextjs-docs` skill.
