@@ -24,6 +24,7 @@
 /templates/*/dist/
 /templates/*/postgres-data/
 /templates/*/src/app/(client)/auth/
+/templates/*/public/openapi.json
 /templates/*/skills-lock.json
 /templates/*/.claude/skills/database-migrations/
 /templates/*/.claude/settings.local.json

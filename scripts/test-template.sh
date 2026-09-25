@@ -17,7 +17,7 @@ const config = JSON.parse(readFileSync(join(dir, ".mouldconfig.json"), "utf8"));
 
 // Development artefacts, never template content
 const skipDirs = new Set(["node_modules", ".next", "dist", "postgres-data"]);
-const skipPaths = new Set(["src/app/(client)/auth", "bun.lock", "next-env.d.ts"]);
+const skipPaths = new Set(["src/app/(client)/auth", "bun.lock", "next-env.d.ts", "public/openapi.json"]);
 
 function walk(base, rel = "") {
   const out = [];

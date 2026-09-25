@@ -38,6 +38,9 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
+      - name: API route files match the operations catalogue
+        run: bun run openapi:check
+
       - name: Build
         run: bun run build
 

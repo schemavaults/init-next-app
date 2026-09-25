@@ -2,6 +2,8 @@
 
 A CLI tool for scaffolding out a new Next.js application with [@schemavaults/auth](https://github.com/schemavaults/auth), [@schemavaults/theme](https://github.com/schemavaults/theme), and [@schemavaults/dbh](https://github.com/schemavaults/dbh) configured.
 
+Every scaffolded app also ships a typed HTTP API layer built on [`@schemavaults/openapi-operations`](https://www.npmjs.com/package/@schemavaults/openapi-operations): each route under `src/app/api/` is defined once (zod request/response schemas, auth requirements, handler) and served as its own [Hono](https://hono.dev) app from its Next.js `route.ts`. `public/openapi.json` is generated from the same definitions on every `bun run dev` / `bun run build` (git-ignored; `bun run openapi:check` verifies the route files against the catalogue in lint and CI) and served at `/openapi.json`; `/docs` renders the document with [`@schemavaults/openapi-docs-ui`](https://www.npmjs.com/package/@schemavaults/openapi-docs-ui). An `api-routes` Claude Code skill in the app's `.claude/skills/` explains how to add routes so they are registered in the document.
+
 When initializing a project, the CLI also installs the [@schemavaults/dbh](https://github.com/schemavaults/dbh) `database-migrations` Claude Code skill into the new project's `.claude/skills/` (via `npx skills add`), so coding agents know how to author migrations in the format this template scaffolds. It additionally scaffolds a `nextjs-docs` skill that points coding agents at the version-matched Next.js documentation bundled with the installed `next` package (`node_modules/next/dist/docs/`) instead of web searches or memory.
 
 ## Usage
@@ -80,8 +82,9 @@ tooling:
 ```bash
 cd templates/schemavaults-next-app
 bun install
-bun run typecheck   # runs auth-codegen first; its output is git-ignored and never shipped
-bun run lint
+bun run typecheck         # runs auth-codegen first; its output is git-ignored and never shipped
+bun run lint              # also checks the API route files against the operations catalogue
+bun run openapi:generate  # writes the git-ignored public/openapi.json (dev and build do this too)
 ```
 
 To run the template itself, copy `_env.local` to `.env.local` first; every `.env*` except

@@ -49,7 +49,10 @@
       "label": "Deployment strategy",
       "required": false,
       "type": "select",
-      "options": ["vercel", "none"],
+      "options": [
+        "vercel",
+        "none"
+      ],
       "default": "none"
     },
     {
@@ -68,18 +71,50 @@
     }
   ],
   "substitutions": [
-    { "find": "xxx_project_name_xxx", "input": "project_name" },
-    { "find": "xxx_display_name_xxx", "input": "display_name" },
-    { "find": "xxx_description_xxx", "input": "description" },
-    { "find": "xxx_client_app_id_xxx", "input": "client_app_id" },
-    { "find": "xxx_api_server_id_xxx", "input": "api_server_id" },
-    { "find": "https://auth.schemavaults.com", "input": "auth_server_url" },
-    { "find": "xxx_dbh_version_xxx", "input": "dbh_version" },
-    { "find": "xxx_cypress_version_xxx", "input": "cypress_version" }
+    {
+      "find": "xxx_project_name_xxx",
+      "input": "project_name"
+    },
+    {
+      "find": "xxx_display_name_xxx",
+      "input": "display_name"
+    },
+    {
+      "find": "xxx_description_xxx",
+      "input": "description"
+    },
+    {
+      "find": "xxx_client_app_id_xxx",
+      "input": "client_app_id"
+    },
+    {
+      "find": "xxx_api_server_id_xxx",
+      "input": "api_server_id"
+    },
+    {
+      "find": "https://auth.schemavaults.com",
+      "input": "auth_server_url"
+    },
+    {
+      "find": "xxx_dbh_version_xxx",
+      "input": "dbh_version"
+    },
+    {
+      "find": "xxx_cypress_version_xxx",
+      "input": "cypress_version"
+    }
   ],
-  "renames": { "_gitignore": ".gitignore", "_env.local": ".env.local" },
+  "renames": {
+    "_gitignore": ".gitignore",
+    "_env.local": ".env.local"
+  },
   "conditionalPaths": [
-    { "when": "deployment == vercel", "paths": ["/vercel.json"] }
+    {
+      "when": "deployment == vercel",
+      "paths": [
+        "/vercel.json"
+      ]
+    }
   ],
   "ignorePatterns": [
     "node_modules/",
@@ -90,6 +125,7 @@
     "dist/",
     "postgres-data/",
     "/src/app/(client)/auth/",
+    "/public/openapi.json",
     ".env",
     ".env.local",
     ".env.development",

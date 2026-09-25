@@ -46,9 +46,11 @@ const required = [
   "templates/schemavaults-next-app/.claude/hooks/install-deps-in-fresh-environment.sh",
   "templates/schemavaults-next-app/.github/workflows/ci.yml",
   "templates/schemavaults-next-app/vercel.json",
+  "templates/schemavaults-next-app/scripts/generate-openapi.ts",
+  "templates/schemavaults-next-app/.claude/skills/api-routes/SKILL.md",
 ];
 const missing = required.filter((f) => !files.includes(f));
-const leaked = files.filter((f) => /(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) && !f.startsWith("dist/index.js"));
+const leaked = files.filter((f) => (/(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) || f.endsWith("/public/openapi.json")) && !f.startsWith("dist/index.js"));
 const gitignores = files.filter((f) => /(^|\/)\.(git|npm)ignore$/.test(f));
 // No env file may ship except the documented .env.example
 const envFiles = files.filter((f) => /(^|\/)\.env(\..+)?$/.test(f) && !f.endsWith("/.env.example"));
@@ -143,6 +145,37 @@ test -s test-app/.claude/skills/nextjs-docs/SKILL.md
 grep -q 'name: nextjs-docs' test-app/.claude/skills/nextjs-docs/SKILL.md
 grep -q 'node_modules/next/dist/docs' test-app/.claude/skills/nextjs-docs/SKILL.md
 
+echo "==> Asserting the api-routes Claude skill was scaffolded"
+test -s test-app/.claude/skills/api-routes/SKILL.md
+grep -q 'name: api-routes' test-app/.claude/skills/api-routes/SKILL.md
+grep -q 'defineApiOperation' test-app/.claude/skills/api-routes/SKILL.md
+
+echo "==> Asserting the OpenAPI API scaffolding"
+test -f test-app/src/lib/api/operation.ts
+test -f test-app/src/lib/api/operations.ts
+test -f test-app/src/lib/api/api.ts
+test -f test-app/src/lib/api/request-context.ts
+test -f test-app/src/lib/api/openapi-document.ts
+test -f test-app/src/lib/api/openapi-info.ts
+test -f test-app/scripts/generate-openapi.ts
+test -f test-app/src/app/api/health/operations.ts
+test -f test-app/src/app/api/health/route.ts
+test -f test-app/src/app/api/greet/\[name\]/operations.ts
+test -f test-app/src/app/api/greet/\[name\]/route.ts
+test -f test-app/src/app/api/me/operations.ts
+test -f test-app/src/app/api/me/route.ts
+test -f test-app/src/app/docs/api-docs.tsx
+test -f test-app/src/app/docs/page.tsx
+test -f test-app/src/app/docs/\[slug\]/page.tsx
+test ! -e test-app/public/openapi.json
+grep -q 'public/openapi.json' test-app/.gitignore
+test -f test-app/cypress/e2e/api.cy.ts
+grep -q '"openapi:generate"' test-app/package.json
+grep -q '"openapi:check"' test-app/package.json
+grep -q '"@schemavaults/openapi-operations"' test-app/package.json
+grep -q '"@schemavaults/openapi-docs-ui"' test-app/package.json
+grep -q 'openapi:check' test-app/.github/workflows/ci.yml
+
 test -f test-app/.env.example
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.example
 
@@ -198,7 +231,7 @@ cd test-app
 bun install
 bun run typecheck
 
-echo "==> Asserting scaffolded app passes eslint checks"
+echo "==> Asserting scaffolded app passes eslint checks (includes openapi:check)"
 bun run lint
 
 echo "==> Writing minimal environment variables to get scaffolded app building"
@@ -212,5 +245,12 @@ echo "==> Asserting scaffolded app builds"
 
 bun run build
 bun run build:migrations
+
+echo "==> Asserting the build generated public/openapi.json with the substituted metadata"
+test -f public/openapi.json
+grep -q '"title": "Test App"' public/openapi.json
+grep -q '"description": "A test project"' public/openapi.json
+grep -q '"/api/health"' public/openapi.json
+grep -q '"name": "access_token_test-api-server"' public/openapi.json
 
 echo "==> All tests passed (--deployment $DEPLOYMENT)"

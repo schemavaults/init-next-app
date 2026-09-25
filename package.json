@@ -20,6 +20,7 @@
     "!templates/*/next-env.d.ts",
     "!templates/*/*.tsbuildinfo",
     "!templates/*/src/app/(client)/auth",
+    "!templates/*/public/openapi.json",
     "!templates/*/postgres-data",
     "!templates/**/.env",
     "!templates/**/.env.*",
