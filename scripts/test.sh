@@ -46,12 +46,11 @@ const required = [
   "templates/schemavaults-next-app/.claude/hooks/install-deps-in-fresh-environment.sh",
   "templates/schemavaults-next-app/.github/workflows/ci.yml",
   "templates/schemavaults-next-app/vercel.json",
-  "templates/schemavaults-next-app/public/openapi.json",
   "templates/schemavaults-next-app/scripts/generate-openapi.ts",
   "templates/schemavaults-next-app/.claude/skills/api-routes/SKILL.md",
 ];
 const missing = required.filter((f) => !files.includes(f));
-const leaked = files.filter((f) => /(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) && !f.startsWith("dist/index.js"));
+const leaked = files.filter((f) => (/(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) || f.endsWith("/public/openapi.json")) && !f.startsWith("dist/index.js"));
 const gitignores = files.filter((f) => /(^|\/)\.(git|npm)ignore$/.test(f));
 // No env file may ship except the documented .env.example
 const envFiles = files.filter((f) => /(^|\/)\.env(\..+)?$/.test(f) && !f.endsWith("/.env.example"));
@@ -168,12 +167,9 @@ test -f test-app/src/app/api/me/route.ts
 test -f test-app/src/app/docs/api-docs.tsx
 test -f test-app/src/app/docs/page.tsx
 test -f test-app/src/app/docs/\[slug\]/page.tsx
-test -f test-app/public/openapi.json
+test ! -e test-app/public/openapi.json
+grep -q 'public/openapi.json' test-app/.gitignore
 test -f test-app/cypress/e2e/api.cy.ts
-grep -q '"title": "Test App"' test-app/public/openapi.json
-grep -q '"description": "A test project"' test-app/public/openapi.json
-grep -q '"/api/health"' test-app/public/openapi.json
-grep -q '"name": "access_token_test-api-server"' test-app/public/openapi.json
 grep -q '"openapi:generate"' test-app/package.json
 grep -q '"openapi:check"' test-app/package.json
 grep -q '"@schemavaults/openapi-operations"' test-app/package.json
@@ -238,9 +234,6 @@ bun run typecheck
 echo "==> Asserting scaffolded app passes eslint checks (includes openapi:check)"
 bun run lint
 
-echo "==> Asserting the committed openapi.json matches what the scaffolded app generates"
-bun run openapi:check
-
 echo "==> Writing minimal environment variables to get scaffolded app building"
 cat >.env.production <<EOL
 SCHEMAVAULTS_CLIENT_APP_ID="test-client-app"
@@ -252,5 +245,12 @@ echo "==> Asserting scaffolded app builds"
 
 bun run build
 bun run build:migrations
+
+echo "==> Asserting the build generated public/openapi.json with the substituted metadata"
+test -f public/openapi.json
+grep -q '"title": "Test App"' public/openapi.json
+grep -q '"description": "A test project"' public/openapi.json
+grep -q '"/api/health"' public/openapi.json
+grep -q '"name": "access_token_test-api-server"' public/openapi.json
 
 echo "==> All tests passed (--deployment $DEPLOYMENT)"

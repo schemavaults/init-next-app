@@ -38,7 +38,7 @@ jobs:
       - name: Typecheck
         run: bun run typecheck
 
-      - name: OpenAPI document is up to date
+      - name: API route files match the operations catalogue
         run: bun run openapi:check
 
       - name: Build

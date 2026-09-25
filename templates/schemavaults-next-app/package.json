@@ -7,7 +7,7 @@
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run auth-codegen && bun run openapi:generate && next dev",
-    "build": "bun run auth-codegen && next build",
+    "build": "bun run auth-codegen && bun run openapi:generate && next build",
     "typecheck": "bun run auth-codegen && next typegen && tsc --noEmit",
     "build:migrations": "bunx @schemavaults/dbh build-db-migrations ./src/db/migrations --outdir ./dist/migrations --sql-module ./src/db/sql.ts --sql-outdir ./dist/",
     "migrate:development": "bun run build:migrations && npx @schemavaults/dbh migrate ./dist/migrations --environment development --env-file .env.development",

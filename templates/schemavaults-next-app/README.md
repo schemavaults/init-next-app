@@ -70,16 +70,16 @@ Next.js `route.ts` next to it:
 - `src/lib/api/operations.ts` — the catalogue every route file and the OpenAPI
   document are built from.
 - `src/app/api/<path>/route.ts` — `export const { GET } = apiRoute([getThing])`.
-- `public/openapi.json` — generated from the catalogue; served at
-  [`/openapi.json`](http://localhost:3000/openapi.json).
+- [`/openapi.json`](http://localhost:3000/openapi.json) — `public/openapi.json`,
+  generated from the catalogue by `bun run dev` / `bun run build` (git-ignored).
 - [`/docs`](http://localhost:3000/docs) — the document rendered live by
   [`@schemavaults/openapi-docs-ui`](https://www.npmjs.com/package/@schemavaults/openapi-docs-ui):
   an index of every route plus one page per operation with parameters,
   schemas, auth requirements and a curl example.
 
 ```bash
-bun run openapi:generate   # rewrite public/openapi.json (also runs on `bun run dev`)
-bun run openapi:check      # fail if it is stale (runs in `bun run lint` and CI)
+bun run openapi:generate   # check the route files, then write public/openapi.json (dev and build run this)
+bun run openapi:check      # only check route files against the catalogue (runs in `bun run lint` and CI)
 ```
 
 Protected operations accept the SchemaVaults access token as a bearer header
@@ -120,4 +120,4 @@ more Claude Code skills in `.claude/skills/`:
   (`node_modules/next/dist/docs/`).
 - `api-routes` explains how to add API endpoints with
   `@schemavaults/openapi-operations` so they are validated, served by Hono and
-  registered in `public/openapi.json` / `/docs`.
+  registered in `/openapi.json` and `/docs`.

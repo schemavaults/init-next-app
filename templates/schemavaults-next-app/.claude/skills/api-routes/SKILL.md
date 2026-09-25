@@ -13,10 +13,11 @@ Every API endpoint in this project is:
 2. **Registered** in the catalogue `src/lib/api/operations.ts`.
 3. **Served** by the sibling `src/app/api/<path>/route.ts`, which exports
    `apiRoute([...])` from `@/lib/api/api` — one Hono app per Next.js route.
-4. **Documented** in `public/openapi.json` (served at `/openapi.json`), generated
-   from the catalogue by `bun run openapi:generate`, and browsable at `/docs`
-   (index) and `/docs/<slug>` (one page per operation), rendered live from the
-   same catalogue by `@schemavaults/openapi-docs-ui`.
+4. **Documented** at `/openapi.json` (`public/openapi.json`, a git-ignored
+   artifact that `bun run dev` and `bun run build` generate from the
+   catalogue) and browsable at `/docs` (index) and `/docs/<slug>` (one page
+   per operation), rendered live from the same catalogue by
+   `@schemavaults/openapi-docs-ui`.
 
 The runtime (`@schemavaults/openapi-operations`) resolves credentials, enforces
 the route guard / scopes / organization role, validates params, query, headers
@@ -32,16 +33,16 @@ and body against the schemas (400, 415), and calls the handler with typed input.
 3. Add each export to the `apiOperations` array in `src/lib/api/operations.ts`.
 4. Create `src/app/api/items/[id]/route.ts`:
    `export const { GET, DELETE } = apiRoute([getItem, deleteItem]);`
-5. Run `bun run openapi:generate` and commit `public/openapi.json` with the code.
-   `bun run lint` and CI run `bun run openapi:check`, which fails when the file
-   is stale, when an operation is missing from the catalogue, when a
-   catalogue entry is not exported by any `operations.ts`, or when a path does
-   not match its directory.
-6. Verify with `bun run typecheck && bun run lint`, then open `/docs` with
-   `bun run dev` (dev regenerates the document on start).
+5. Verify with `bun run typecheck && bun run lint`. Lint (and CI) run
+   `bun run openapi:check`, which fails when an operation is missing from the
+   catalogue, when a catalogue entry is not exported by any `operations.ts`,
+   when a path does not match its directory, or when a `route.ts` has no
+   `operations.ts`. Nothing needs committing besides the code: `bun run dev`
+   and `bun run build` regenerate `public/openapi.json` (git-ignored).
+6. Open `/docs` with `bun run dev` to review the result.
 
-Removing an endpoint: delete the directory, remove its entries from the
-catalogue, run `bun run openapi:generate`.
+Removing an endpoint: delete the directory and remove its entries from the
+catalogue.
 
 ## `operations.ts` template
 
@@ -181,6 +182,8 @@ schemes, route guard, scopes and organization role per operation.
   the header, `documentOnly: true` to parse the body yourself.
 - Document metadata (title, description, servers, tag descriptions) lives in
   `src/lib/api/openapi-info.ts`; the version comes from `package.json`.
+- `/docs` renders the live catalogue, so it never lags behind the code;
+  `/openapi.json` is regenerated on every dev start and build.
 
 ## Files
 
@@ -192,14 +195,13 @@ schemes, route guard, scopes and organization role per operation.
 | `src/lib/api/request-context.ts` | `ApiRequestContext` (`dbh`, `environment`) built and disposed per request |
 | `src/lib/api/openapi-document.ts` | `getOpenApiDocument()` — `buildOpenApiDocument({ documentRuntimeResponses: true })` over the catalogue |
 | `src/lib/api/openapi-info.ts` | `info`, `servers`, `tags` of the document |
-| `scripts/generate-openapi.ts` | Writes/checks `public/openapi.json` after `checkNextAppRouterRoutes()` (catalogue ↔ `operations.ts` files ↔ directories) |
+| `scripts/generate-openapi.ts` | Runs `checkNextAppRouterRoutes()` (catalogue ↔ `operations.ts` files ↔ directories), then writes `public/openapi.json` unless `--check` |
+| `public/openapi.json` | Generated on dev/build, git-ignored; served at `/openapi.json` |
 | `src/app/docs/api-docs.tsx`, `page.tsx`, `[slug]/page.tsx` | `/docs` via `createApiDocsPages` from `@schemavaults/openapi-docs-ui/nextjs` |
 | `src/app/api/health`, `src/app/api/greet/[name]`, `src/app/api/me` | Examples: public, params/query/body, authenticated |
 
 ## Troubleshooting
 
-- **`openapi:check` fails in CI** — run `bun run openapi:generate` locally and
-  commit `public/openapi.json`.
 - **`checkNextAppRouterRoutes` reports an operation missing from
   `src/lib/api/operations.ts`** — add the export to the catalogue.
 - **… reports a path that does not match its folder** — `path` must match the
