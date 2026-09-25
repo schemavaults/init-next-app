@@ -83,8 +83,9 @@ bun run openapi:check      # fail if it is stale (runs in `bun run lint` and CI)
 ```
 
 Protected operations accept the SchemaVaults access token as a bearer header
-or the first-party cookie; verification (`src/lib/api/auth-resolvers.ts`)
-needs `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` at runtime. Example endpoints
+or the first-party cookie; verification (`createSchemaVaultsAuthResolvers()`
+from `@schemavaults/auth-server-sdk/openapi-operations`) needs
+`SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` at runtime. Example endpoints
 ship in `src/app/api/health`, `src/app/api/greet/[name]` and `src/app/api/me`;
 delete them once you have real routes and regenerate. The `api-routes`
 Claude Code skill in `.claude/skills/` documents the full workflow.

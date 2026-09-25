@@ -155,7 +155,6 @@ echo "==> Asserting the OpenAPI API scaffolding"
 test -f test-app/src/lib/api/operation.ts
 test -f test-app/src/lib/api/operations.ts
 test -f test-app/src/lib/api/api.ts
-test -f test-app/src/lib/api/auth-resolvers.ts
 test -f test-app/src/lib/api/request-context.ts
 test -f test-app/src/lib/api/openapi-document.ts
 test -f test-app/src/lib/api/openapi-info.ts

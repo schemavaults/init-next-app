@@ -1,4 +1,4 @@
-import { authenticatedAccess, defineApiOperation, requireUser, z } from "@/lib/api/operation";
+import { authenticatedAccess, defineApiOperation, z } from "@/lib/api/operation";
 
 export const CurrentUserSchema = z
   .object({
@@ -12,9 +12,9 @@ export const CurrentUserSchema = z
 /**
  * Example of a protected operation: `authenticatedAccess()` accepts the
  * SchemaVaults access token as a bearer header or first-party cookie,
- * documents the security requirement and hands the handler `ctx.auth.user`.
- * Use `adminAccess()` to additionally require a platform administrator, or
- * pass `{ requiredScopes, organization }` for finer checks.
+ * documents the security requirement and hands the handler a non-null
+ * `ctx.auth.user`. Use `adminAccess()` to additionally require a platform
+ * administrator, or pass `{ requiredScopes, organization }` for finer checks.
  */
 export const getCurrentUser = defineApiOperation({
   method: "get",
@@ -27,7 +27,7 @@ export const getCurrentUser = defineApiOperation({
     200: { description: "The caller's profile.", schema: CurrentUserSchema },
   },
   handler: (ctx) => {
-    const user = requireUser(ctx.auth);
+    const user = ctx.auth.user;
     return ctx.json(200, {
       uid: user.uid,
       email: user.email,

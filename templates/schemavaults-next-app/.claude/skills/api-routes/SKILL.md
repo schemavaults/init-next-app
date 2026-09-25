@@ -47,11 +47,10 @@ catalogue, run `bun run openapi:generate`.
 
 ```ts
 import {
-  ApiErrorResponseSchema,
   OperationError,
+  OperationErrorBodySchema,
   authenticatedAccess,   // or adminAccess(), publicAccess()
   defineApiOperation,
-  requireUser,
   z,
 } from "@/lib/api/operation";
 
@@ -88,16 +87,16 @@ export const getItem = defineApiOperation({
   },
   responses: {
     200: { description: "The item.", schema: ItemSchema },
-    404: { description: "No such item.", schema: ApiErrorResponseSchema },
+    404: { description: "No such item.", schema: OperationErrorBodySchema },
     // 204: { description: "Deleted." },   // no schema => use ctx.empty(204)
   },
   handler: async (ctx) => {
     // ctx.params / ctx.query / ctx.headers / ctx.body are validated and typed.
-    // ctx.auth is the AuthPrincipal (null on publicAccess() operations).
+    // ctx.auth is the principal: null on publicAccess() operations, with a
+    // non-null `user` on authenticatedAccess() / adminAccess() ones.
     // ctx.context is the per-request ApiRequestContext: `ctx.context.dbh`
     // (lazily opened Kysely handle) and `ctx.context.environment`.
-    const user = requireUser(ctx.auth);
-    const item = await loadItem(ctx.context.dbh, ctx.params.id, user.uid);
+    const item = await loadItem(ctx.context.dbh, ctx.params.id, ctx.auth.user.uid);
     if (!item) {
       throw new OperationError(404, { error: "not_found", message: "No such item" });
     }
@@ -108,8 +107,10 @@ export const getItem = defineApiOperation({
 
 The document automatically lists `400` (when the operation validates
 anything), `401` (protected operations), `403` (admin guard, required scopes
-or organization role), `415` (operations with a body) and `500`. Declare the
-other statuses you return yourself, with `ApiErrorResponseSchema` for errors.
+or organization role), `415` (operations with a body) and `500`
+(`documentRuntimeResponses: true` in `src/lib/api/openapi-document.ts`).
+Declare the other statuses you return yourself, with
+`OperationErrorBodySchema` for errors.
 
 ## `route.ts` template
 
@@ -132,7 +133,7 @@ OpenAPI generator imports `operations.ts` under bun.
 | Field | Meaning |
 | --- | --- |
 | `ctx.params`, `ctx.query`, `ctx.headers`, `ctx.body` | Validated, typed input (`{}` / `undefined` when not declared) |
-| `ctx.auth` | `AuthPrincipal` (`user`, `isAdmin`, `scope`, `getOrganizationRole`) or `null` for public operations; `requireUser(ctx.auth)` narrows to `UserData` |
+| `ctx.auth` | `null` for public operations; otherwise the principal (`user: UserData`, `isAdmin`, `scope`, `getOrganizationRole`). `user` is non-null because both SchemaVaults schemes declare `principal: "user"`; `requireUser(ctx.auth)` exists for operations that also accept non-user schemes (API keys) |
 | `ctx.context` | `ApiRequestContext`: `dbh` (lazy `ServerlessDatabase`), `environment`; disposed after the response |
 | `ctx.request`, `ctx.url` | The raw request |
 | `ctx.json(status, body, init?)` | Typed JSON response for a declared status |
@@ -143,7 +144,7 @@ Throw `new OperationError(status, { error, message, details? })` for expected
 failures. Anything else thrown becomes a `500` `internal_server_error`, logged
 via the factory's `onError`. Error envelope for every error response:
 `{ "success": false, "error": "<code>", "message": "...", "issues"?: [...] }`
-(`ApiErrorResponseSchema`).
+(`OperationErrorBodySchema`, `components.schemas.OperationError`).
 
 ## Authentication
 
@@ -155,12 +156,16 @@ via the factory's `onError`. Error envelope for every error response:
 Protected operations accept the SchemaVaults access token either as
 `Authorization: Bearer <access token>` or as the first-party access-token
 cookie set by this app's login flow (`src/lib/api/operation.ts`,
-`schemaVaultsAuthSchemes`). Verification lives in
-`src/lib/api/auth-resolvers.ts`: it uses `@schemavaults/auth-server-sdk`'s
-`RouteGuardFactory` (remote JWKS), so `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY`
-and `SCHEMAVAULTS_AUTH_SERVER_URL` must be set at runtime; without the key the
-resolver answers `500` rather than accepting anything. The docs pages show the
-accepted schemes, route guard, scopes and organization role per operation.
+`schemaVaultsAuthSchemes`). Verification is
+`createSchemaVaultsAuthResolvers()` from
+`@schemavaults/auth-server-sdk/openapi-operations` (wired in
+`src/lib/api/api.ts`): remote JWKS verification through `RouteGuardFactory`,
+so `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` and
+`SCHEMAVAULTS_AUTH_SERVER_URL` must be set at runtime; without the key it
+answers `500` `auth_not_configured` rather than accepting anything. Pass
+`{ acceptedAudiences, isTokenRevoked, debug }` to it for RFC 8707 resource
+URLs, revocation checks or diagnostics. The docs pages show the accepted
+schemes, route guard, scopes and organization role per operation.
 
 ## Conventions
 
@@ -181,14 +186,13 @@ accepted schemes, route guard, scopes and organization role per operation.
 
 | Path | Purpose |
 | --- | --- |
-| `src/lib/api/operation.ts` | `defineApiOperation`, `publicAccess`/`authenticatedAccess`/`adminAccess`, `requireUser`, `ApiErrorResponseSchema`, `z`, `OperationError` |
+| `src/lib/api/operation.ts` | `defineApiOperation`, `publicAccess`/`authenticatedAccess`/`adminAccess`, `OperationErrorBodySchema`, `requireUser`, `z`, `OperationError` |
 | `src/lib/api/operations.ts` | The catalogue: every operation, in one array |
-| `src/lib/api/api.ts` | `createOperationsAppFactory` bound to the catalogue, resolvers and context; `apiRoute()` |
-| `src/lib/api/auth-resolvers.ts` | Verifies bearer / cookie access tokens via `@schemavaults/auth-server-sdk` |
+| `src/lib/api/api.ts` | `createOperationsAppFactory` bound to the catalogue, `createSchemaVaultsAuthResolvers()` and the request context; `apiRoute()` |
 | `src/lib/api/request-context.ts` | `ApiRequestContext` (`dbh`, `environment`) built and disposed per request |
-| `src/lib/api/openapi-document.ts` | `getOpenApiDocument()` — `buildOpenApiDocument` over the catalogue plus the runtime's error responses |
+| `src/lib/api/openapi-document.ts` | `getOpenApiDocument()` — `buildOpenApiDocument({ documentRuntimeResponses: true })` over the catalogue |
 | `src/lib/api/openapi-info.ts` | `info`, `servers`, `tags` of the document |
-| `scripts/generate-openapi.ts` | Writes/checks `public/openapi.json`; cross-checks catalogue ↔ `operations.ts` files ↔ directories |
+| `scripts/generate-openapi.ts` | Writes/checks `public/openapi.json` after `checkNextAppRouterRoutes()` (catalogue ↔ `operations.ts` files ↔ directories) |
 | `src/app/docs/api-docs.tsx`, `page.tsx`, `[slug]/page.tsx` | `/docs` via `createApiDocsPages` from `@schemavaults/openapi-docs-ui/nextjs` |
 | `src/app/api/health`, `src/app/api/greet/[name]`, `src/app/api/me` | Examples: public, params/query/body, authenticated |
 
@@ -196,14 +200,14 @@ accepted schemes, route guard, scopes and organization role per operation.
 
 - **`openapi:check` fails in CI** — run `bun run openapi:generate` locally and
   commit `public/openapi.json`.
-- **"is not listed in src/lib/api/operations.ts"** — add the export to the
-  catalogue.
-- **"declares path X but its directory maps to Y"** — `path` must match the
+- **`checkNextAppRouterRoutes` reports an operation missing from
+  `src/lib/api/operations.ts`** — add the export to the catalogue.
+- **… reports a path that does not match its folder** — `path` must match the
   directory (`[id]` ↔ `{id}`).
 - **`apiRoute()` throws "not part of the catalogue"** — same fix: register it.
 - **415 from browser `fetch`** — the caller omitted `Content-Type:
   application/json`; either set it or add `lenientContentType: true`.
-- **`/api/me` answers 500 "Authentication is not configured"** — set
+- **`/api/me` answers 500 `auth_not_configured`** — set
   `SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY` (see `.env.example`).
 - For Next.js route handler semantics (caching, runtime) consult the
   `nextjs-docs` skill.

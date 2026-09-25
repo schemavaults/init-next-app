@@ -31,16 +31,16 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT",
-        "description": "Access token issued by the SchemaVaults auth server for this API server.",
-        "x-schemavaults-title": "SchemaVaults access token (Bearer)",
+        "description": "Access token issued by the auth server for this API server.",
+        "x-schemavaults-title": "Access token (Bearer)",
         "x-schemavaults-challenge": "Bearer realm=\"schemavaults\""
       },
       "schemavaults-access-token-cookie": {
         "type": "apiKey",
         "in": "cookie",
         "name": "access_token_xxx_api_server_id_xxx",
-        "description": "First-party access token cookie set by the SchemaVaults auth flow.",
-        "x-schemavaults-title": "SchemaVaults access token (cookie)"
+        "description": "First-party access token cookie set after login.",
+        "x-schemavaults-title": "Access token (cookie)"
       }
     },
     "schemas": {
@@ -65,7 +65,7 @@
           "timestamp"
         ]
       },
-      "ApiErrorResponse": {
+      "OperationError": {
         "type": "object",
         "properties": {
           "success": {
@@ -76,24 +76,25 @@
           },
           "error": {
             "type": "string",
-            "description": "Machine-readable error code.",
+            "description": "Machine readable error code.",
             "example": "validation_error"
           },
           "message": {
             "type": "string",
-            "example": "Request validation failed"
+            "description": "Human readable explanation.",
+            "example": "Invalid request body"
           },
           "issues": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ApiErrorIssue"
+              "$ref": "#/components/schemas/OperationValidationIssue"
             },
             "description": "Present on `validation_error` responses."
           },
           "details": {
             "type": "object",
             "additionalProperties": {},
-            "description": "Extra machine-readable details (e.g. missing scopes)."
+            "description": "Extra machine readable details (e.g. the missing scopes on `insufficient_scope`)."
           }
         },
         "required": [
@@ -102,7 +103,7 @@
           "message"
         ]
       },
-      "ApiErrorIssue": {
+      "OperationValidationIssue": {
         "type": "object",
         "properties": {
           "location": {
@@ -112,11 +113,13 @@
               "query",
               "headers",
               "body"
-            ]
+            ],
+            "description": "Which part of the request failed validation."
           },
           "path": {
             "type": "string",
-            "example": "greeting"
+            "description": "Dotted path of the offending field within that part (empty for the whole part).",
+            "example": "name"
           },
           "message": {
             "type": "string",
@@ -124,6 +127,7 @@
           },
           "code": {
             "type": "string",
+            "description": "zod issue code.",
             "example": "invalid_type"
           }
         },
@@ -236,7 +240,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -320,7 +324,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -330,7 +334,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -393,7 +397,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -403,7 +407,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -413,7 +417,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -458,11 +462,21 @@
             }
           },
           "401": {
-            "description": "No credential was presented, or it is invalid or expired.",
+            "description": "No credential was presented, or the presented credential is invalid, expired or revoked.",
+            "headers": {
+              "WWW-Authenticate": {
+                "schema": {
+                  "type": "string",
+                  "description": "Challenge for the accepted schemes, e.g. `Bearer realm=\"schemavaults\"`."
+                },
+                "required": false,
+                "description": "Challenge for the accepted schemes, e.g. `Bearer realm=\"schemavaults\"`."
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }
@@ -472,7 +486,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiErrorResponse"
+                  "$ref": "#/components/schemas/OperationError"
                 }
               }
             }

@@ -10,21 +10,22 @@
  */
 import {
   OperationError,
+  OperationErrorBodySchema,
   createOperationDefiner,
   publicAccess,
   requireAuth,
+  requireUser,
   schemaVaultsAccessTokenBearerScheme,
   schemaVaultsAccessTokenCookieScheme,
   withOpenApi,
   z,
-  type AuthPrincipal,
   type AuthRequirements,
   type RequiredOperationAuth,
 } from "@schemavaults/openapi-operations";
-import { AccessTokenCookieName, type UserData } from "@schemavaults/auth-common";
+import { AccessTokenCookieName, type UserData } from "@schemavaults/auth-server-sdk";
 import type { ApiRequestContext } from "./request-context";
 
-export { OperationError, publicAccess, withOpenApi, z };
+export { OperationError, OperationErrorBodySchema, publicAccess, requireUser, withOpenApi, z };
 export type { UserData };
 
 /**
@@ -44,77 +45,40 @@ export const accessTokenCookieScheme = schemaVaultsAccessTokenCookieScheme(
   AccessTokenCookieName(API_SERVER_ID),
 );
 
-/** Every credential a protected operation accepts (any one of them suffices). */
+/**
+ * Every credential a protected operation accepts (any one of them suffices).
+ * Both schemes declare `principal: "user"`, so handlers get a non-null
+ * `ctx.auth.user`.
+ */
 export const schemaVaultsAuthSchemes = [
   accessTokenBearerScheme,
   accessTokenCookieScheme,
 ] as const;
 
-export type AccessOptions = Omit<AuthRequirements, "schemes" | "routeGuard">;
+export type SchemaVaultsAuthSchemes = typeof schemaVaultsAuthSchemes;
+export type AccessOptions = Omit<
+  AuthRequirements<SchemaVaultsAuthSchemes>,
+  "schemes" | "routeGuard"
+>;
 
 /** Any signed-in SchemaVaults user (route guard `authenticated`). */
-export function authenticatedAccess(options: AccessOptions = {}): RequiredOperationAuth {
+export function authenticatedAccess(
+  options: AccessOptions = {},
+): RequiredOperationAuth<SchemaVaultsAuthSchemes> {
   return requireAuth({ schemes: schemaVaultsAuthSchemes, routeGuard: "authenticated", ...options });
 }
 
 /** Platform administrators only (route guard `admin`). */
-export function adminAccess(options: AccessOptions = {}): RequiredOperationAuth {
+export function adminAccess(
+  options: AccessOptions = {},
+): RequiredOperationAuth<SchemaVaultsAuthSchemes> {
   return requireAuth({ schemes: schemaVaultsAuthSchemes, routeGuard: "admin", ...options });
 }
 
 /**
  * Define one HTTP operation (method + path + schemas + auth + handler).
- * `ctx.context` is an {@link ApiRequestContext}; `ctx.auth.user` is the
- * SchemaVaults `UserData` (null on `publicAccess()` operations).
+ * `ctx.context` is an {@link ApiRequestContext}; on `authenticatedAccess()` /
+ * `adminAccess()` operations `ctx.auth.user` is the SchemaVaults `UserData`
+ * (null on `publicAccess()` operations).
  */
 export const defineApiOperation = createOperationDefiner<ApiRequestContext, UserData>();
-
-/**
- * The signed-in user behind a protected operation. `ctx.auth.user` is typed
- * nullable because a principal could in principle be a non-user credential
- * (API key, client credentials); the SchemaVaults schemes above always
- * resolve a user, so this narrows it and fails closed otherwise.
- */
-export function requireUser(auth: AuthPrincipal<UserData> | null): UserData {
-  if (!auth?.user) {
-    throw new OperationError(401, {
-      error: "unauthorized",
-      message: "This operation requires a signed-in user",
-    });
-  }
-  return auth.user;
-}
-
-export const ApiErrorIssueSchema = z
-  .object({
-    location: z.enum(["params", "query", "headers", "body"]),
-    path: z.string().openapi({ example: "greeting" }),
-    message: z.string().openapi({ example: "Invalid input: expected string, received undefined" }),
-    code: z.string().openapi({ example: "invalid_type" }),
-  })
-  .openapi("ApiErrorIssue");
-
-/**
- * The `{ success: false, error, message }` envelope every error response
- * uses — both the ones the operations runtime produces (validation, auth,
- * unsupported media type, unexpected failures) and the ones handlers throw
- * with `new OperationError(status, { error, message })`.
- */
-export const ApiErrorResponseSchema = z
-  .object({
-    success: z.literal(false),
-    error: z.string().openapi({
-      description: "Machine-readable error code.",
-      example: "validation_error",
-    }),
-    message: z.string().openapi({ example: "Request validation failed" }),
-    issues: z.array(ApiErrorIssueSchema).optional().openapi({
-      description: "Present on `validation_error` responses.",
-    }),
-    details: z.record(z.string(), z.unknown()).optional().openapi({
-      description: "Extra machine-readable details (e.g. missing scopes).",
-    }),
-  })
-  .openapi("ApiErrorResponse");
-
-export type ApiErrorResponse = z.infer<typeof ApiErrorResponseSchema>;

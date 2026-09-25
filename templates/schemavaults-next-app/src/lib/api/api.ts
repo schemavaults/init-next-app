@@ -14,7 +14,7 @@ import {
   type NextRouteHandlers,
 } from "@schemavaults/openapi-operations";
 import type { UserData } from "@schemavaults/auth-server-sdk";
-import { schemaVaultsAuthResolvers } from "./auth-resolvers";
+import { createSchemaVaultsAuthResolvers } from "@schemavaults/auth-server-sdk/openapi-operations";
 import { apiOperations } from "./operations";
 import {
   ApiRequestContext,
@@ -24,7 +24,10 @@ import {
 
 export const api = createOperationsAppFactory<ApiRequestContext, UserData>({
   operations: apiOperations,
-  authResolvers: schemaVaultsAuthResolvers,
+  // Verifies bearer / cookie access tokens against the auth server's JWKS
+  // (needs SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY and
+  // SCHEMAVAULTS_AUTH_SERVER_URL at runtime; read on first request).
+  authResolvers: createSchemaVaultsAuthResolvers<ApiRequestContext>(),
   context: createApiRequestContext,
   disposeContext: disposeApiRequestContext,
   onError: (error, c, { operation }) => {
