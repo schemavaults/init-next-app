@@ -7,6 +7,10 @@ const output: "standalone" | undefined = (
 
 const nextConfig: NextConfig = {
   output,
+  experimental: {
+    // Unmatched URLs render src/app/global-not-found.tsx
+    globalNotFound: true,
+  },
   turbopack: {
     root: __dirname
   }
