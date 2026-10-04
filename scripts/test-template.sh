@@ -61,6 +61,8 @@ for (const key of Object.keys(config.renames ?? {})) {
 const pkg = JSON.parse(contents.get("package.json"));
 if (!pkg.devDependencies?.cypress) fail("package.json has no devDependencies.cypress (the docker-compose cypress tag is derived from it)");
 if (!pkg.dependencies?.["@schemavaults/dbh"]) fail("package.json has no dependencies['@schemavaults/dbh']");
+// the CLI removes these when --blob-storage is not s3 (S3_DEPENDENCIES in src/generate.ts)
+if (!pkg.dependencies?.["@aws-sdk/client-s3"]) fail("package.json has no dependencies['@aws-sdk/client-s3'] (used by src/lib/s3.ts)");
 
 // the only env file the template may contain is .env.example; local defaults live in _env.local
 for (const file of files) {

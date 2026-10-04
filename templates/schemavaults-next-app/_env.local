@@ -4,3 +4,14 @@
 SCHEMAVAULTS_CLIENT_APP_ID="xxx_client_app_id_xxx"
 SCHEMAVAULTS_API_SERVER_ID="xxx_api_server_id_xxx"
 SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"
+# mould:if blob_storage == s3
+
+# Blob Storage: the local `s3` service from docker-compose.yml
+# (start it with `docker compose up -d --wait s3`)
+S3_ENDPOINT="http://localhost:9000"
+S3_REGION="us-east-1"
+S3_ACCESS_KEY_ID="s3-dev-access-key"
+S3_SECRET_ACCESS_KEY="s3-dev-secret-key"
+S3_BUCKET="dev-bucket"
+S3_FORCE_PATH_STYLE="true"
+# mould:endif

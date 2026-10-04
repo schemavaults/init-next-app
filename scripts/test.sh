@@ -4,13 +4,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 DEPLOYMENT="${1:-vercel}"
+BLOB_STORAGE="${2:-s3}"
 
-if [ "$DEPLOYMENT" != "vercel" ] && [ "$DEPLOYMENT" != "none" ]; then
-  echo "Usage: $0 [vercel|none]" >&2
+if { [ "$DEPLOYMENT" != "vercel" ] && [ "$DEPLOYMENT" != "none" ]; } ||
+  { [ "$BLOB_STORAGE" != "s3" ] && [ "$BLOB_STORAGE" != "none" ]; }; then
+  echo "Usage: $0 [vercel|none] [s3|none]" >&2
   exit 1
 fi
 
-echo "==> Running scaffold test with --deployment $DEPLOYMENT"
+echo "==> Running scaffold test with --deployment $DEPLOYMENT --blob-storage $BLOB_STORAGE"
 
 if [ -d test-app ]; then
   echo "==> Cleaning up existing test-app directory"
@@ -48,6 +50,8 @@ const required = [
   "templates/schemavaults-next-app/vercel.json",
   "templates/schemavaults-next-app/scripts/generate-openapi.ts",
   "templates/schemavaults-next-app/.claude/skills/api-routes/SKILL.md",
+  "templates/schemavaults-next-app/.claude/skills/blob-storage/SKILL.md",
+  "templates/schemavaults-next-app/src/lib/s3.ts",
 ];
 const missing = required.filter((f) => !files.includes(f));
 const leaked = files.filter((f) => (/(^|\/)(node_modules|\.next|dist\/migrations|src\/app\/\(client\)\/auth)\//.test(f) || f.endsWith("/public/openapi.json")) && !f.startsWith("dist/index.js"));
@@ -70,10 +74,25 @@ if $CLI reject-test-app \
   --client-app-id "Not A Valid ID!" \
   --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
-  --deployment "$DEPLOYMENT" >/dev/null 2>&1; then
+  --deployment "$DEPLOYMENT" \
+  --blob-storage "$BLOB_STORAGE" >/dev/null 2>&1; then
   echo "Expected invalid --client-app-id to be rejected" >&2
   exit 1
 fi
+
+echo "==> Asserting an unknown --blob-storage is rejected"
+if $CLI reject-test-app \
+  --display-name "Test App" \
+  --description "A test project" \
+  --client-app-id "test-client-app" \
+  --api-server-id "test-api-server" \
+  --auth-server-url "https://auth.schemavaults.com" \
+  --deployment "$DEPLOYMENT" \
+  --blob-storage "gcs" >/dev/null 2>&1; then
+  echo "Expected --blob-storage gcs to be rejected" >&2
+  exit 1
+fi
+test ! -e reject-test-app
 
 echo "==> Scaffolding test app"
 $CLI test-app \
@@ -82,7 +101,8 @@ $CLI test-app \
   --client-app-id "test-client-app" \
   --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
-  --deployment "$DEPLOYMENT"
+  --deployment "$DEPLOYMENT" \
+  --blob-storage "$BLOB_STORAGE"
 
 echo "==> Asserting scaffolded directory structure"
 test -d test-app
@@ -203,6 +223,44 @@ else
   fi
 fi
 
+if [ "$BLOB_STORAGE" = "s3" ]; then
+  echo "==> Asserting blob-storage=s3 scaffolding"
+  test -f test-app/src/lib/s3.ts
+  test -s test-app/.claude/skills/blob-storage/SKILL.md
+  grep -q 'name: blob-storage' test-app/.claude/skills/blob-storage/SKILL.md
+  grep -q '"@aws-sdk/client-s3"' test-app/package.json
+  grep -q 'image: rustfs/rustfs:' test-app/docker-compose.yml
+  grep -q 's3-data:/data' test-app/docker-compose.yml
+  grep -q 'S3_ENDPOINT: http://s3:9000' test-app/docker-compose.yml
+  grep -q 'S3_ENDPOINT="http://localhost:9000"' test-app/.env.local
+  grep -q 'S3_BUCKET="dev-bucket"' test-app/.env.local
+  grep -q 'S3_BUCKET=""' test-app/.env.example
+  grep -q 'S3_SECRET_ACCESS_KEY=""' test-app/.env.example
+  grep -q 'Blob Storage (S3)' test-app/README.md
+else
+  echo "==> Asserting blob-storage=none scaffolding"
+  if [ -e test-app/src/lib/s3.ts ] || [ -e test-app/.claude/skills/blob-storage ]; then
+    echo "Expected no S3 client or blob-storage skill when --blob-storage none" >&2
+    exit 1
+  fi
+  if grep -q '@aws-sdk/' test-app/package.json; then
+    echo "Expected no @aws-sdk/* dependencies when --blob-storage none" >&2
+    exit 1
+  fi
+  if grep -qiE 'rustfs|s3' test-app/docker-compose.yml; then
+    echo "Expected no S3 service in docker-compose.yml when --blob-storage none" >&2
+    exit 1
+  fi
+  if grep -q 'S3_' test-app/.env.local test-app/.env.example; then
+    echo "Expected no S3_* variables in .env.local/.env.example when --blob-storage none" >&2
+    exit 1
+  fi
+  if grep -qE 'S3|blob-storage' test-app/README.md; then
+    echo "Expected no blob storage docs in README.md when --blob-storage none" >&2
+    exit 1
+  fi
+fi
+
 echo "==> Asserting scaffolded package.json content"
 grep -q '"name": "test-app"' test-app/package.json
 grep -q '"description": "A test project"' test-app/package.json
@@ -253,4 +311,37 @@ grep -q '"description": "A test project"' public/openapi.json
 grep -q '"/api/health"' public/openapi.json
 grep -q '"name": "access_token_test-api-server"' public/openapi.json
 
-echo "==> All tests passed (--deployment $DEPLOYMENT)"
+if [ "$BLOB_STORAGE" = "s3" ]; then
+  echo "==> Asserting src/lib/s3.ts round-trips an object through the local s3 service"
+  if docker info >/dev/null 2>&1; then
+    trap 'docker compose down -v >/dev/null 2>&1 || true' EXIT
+    docker compose up -d --wait s3
+    # Bun loads .env.local, so this uses the scaffolded development defaults
+    cat >s3-roundtrip.ts <<'TS'
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Bucket, getS3Client } from "./src/lib/s3";
+
+const s3 = getS3Client();
+const Bucket = getS3Bucket();
+const Key = `s3-roundtrip-${Date.now()}.txt`;
+await s3.send(new PutObjectCommand({ Bucket, Key, Body: "hello from test-app" }));
+const object = await s3.send(new GetObjectCommand({ Bucket, Key }));
+const body = await object.Body?.transformToString();
+await s3.send(new DeleteObjectCommand({ Bucket, Key }));
+if (body !== "hello from test-app") throw new Error(`Unexpected object body: ${body}`);
+console.log(`Round-tripped ${Key} through bucket ${Bucket}`);
+TS
+    # react-server resolves `server-only` to its empty module, as in Next.js server code
+    bun --conditions react-server s3-roundtrip.ts
+    rm s3-roundtrip.ts
+    docker compose down -v
+    trap - EXIT
+  elif [ -n "${CI:-}" ]; then
+    echo "Docker is required in CI for the S3 round-trip check" >&2
+    exit 1
+  else
+    echo "    skipped: Docker is not available"
+  fi
+fi
+
+echo "==> All tests passed (--deployment $DEPLOYMENT --blob-storage $BLOB_STORAGE)"

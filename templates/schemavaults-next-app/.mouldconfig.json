@@ -56,6 +56,18 @@
       "default": "none"
     },
     {
+      "id": "blob_storage",
+      "label": "Blob storage",
+      "description": "With 's3': an S3 client in src/lib/s3.ts, S3_* env vars, and a local S3-compatible service (RustFS) in docker-compose.yml",
+      "required": false,
+      "type": "select",
+      "options": [
+        "s3",
+        "none"
+      ],
+      "default": "none"
+    },
+    {
       "id": "dbh_version",
       "label": "@schemavaults/dbh version",
       "description": "Tag of the postgres-ws-proxy image in docker-compose.yml; must match package.json",
@@ -113,6 +125,13 @@
       "when": "deployment == vercel",
       "paths": [
         "/vercel.json"
+      ]
+    },
+    {
+      "when": "blob_storage == s3",
+      "paths": [
+        "/src/lib/s3.ts",
+        "/.claude/skills/blob-storage/"
       ]
     }
   ],
