@@ -80,6 +80,38 @@ export function patchSchemavaultsVersions(
   });
 }
 
+/**
+ * Dependencies of the files mould only renders with `blob_storage == s3`.
+ * JSON cannot carry mould:if blocks, so the template's package.json always
+ * declares them (the template installs and type-checks on its own) and the
+ * CLI removes them when blob storage is not chosen.
+ */
+export const S3_DEPENDENCIES = ["@aws-sdk/client-s3"] as const;
+
+/**
+ * Remove `names` from the rendered package.json's dependencies. Each must
+ * exist there — a missing key means the template and this list have drifted.
+ */
+export function removeDependencies(targetDir: string, names: readonly string[]): void {
+  const packageJsonPath: string = join(targetDir, "package.json");
+  const pkg: PackageJsonLike = readPackageJson(packageJsonPath);
+  const dependencies: Record<string, string> | undefined = pkg.dependencies;
+  if (!dependencies) {
+    throw new Error(`${packageJsonPath} has no "dependencies" field`);
+  }
+  for (const name of names) {
+    if (!(name in dependencies)) {
+      throw new Error(
+        `Expected the template package.json to depend on ${name}; the template and the optional dependency list have drifted`,
+      );
+    }
+    delete dependencies[name];
+  }
+  writeFileSync(packageJsonPath, `${JSON.stringify(pkg, null, 2)}\n`, {
+    encoding: "utf-8",
+  });
+}
+
 export interface GenerateProjectOptions {
   targetDir: string;
   projectName: string;
@@ -89,12 +121,14 @@ export interface GenerateProjectOptions {
   apiServerId: string;
   authServerUrl: string;
   deployment: "vercel" | "none";
+  blobStorage: "s3" | "none";
   schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>;
 }
 
 /**
  * Render the `schemavaults-next-app` mould template into `targetDir`, then
- * patch in the freshly fetched `@schemavaults/*` versions.
+ * patch in the freshly fetched `@schemavaults/*` versions and drop the
+ * dependencies of optional features that were not chosen.
  */
 export async function generateProject(
   options: GenerateProjectOptions,
@@ -113,6 +147,7 @@ export async function generateProject(
       api_server_id: options.apiServerId,
       auth_server_url: options.authServerUrl,
       deployment: options.deployment,
+      blob_storage: options.blobStorage,
       dbh_version: options.schemavaultsPackageVersions["@schemavaults/dbh"],
       cypress_version: templateVersions.cypress,
     },
@@ -122,6 +157,9 @@ export async function generateProject(
   });
 
   patchSchemavaultsVersions(options.targetDir, options.schemavaultsPackageVersions);
+  if (options.blobStorage !== "s3") {
+    removeDependencies(options.targetDir, S3_DEPENDENCIES);
+  }
 
   return result;
 }

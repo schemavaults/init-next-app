@@ -109,11 +109,46 @@ bun run migrate:development
 bun run migrate:test
 bun run migrate:production
 ```
+<!-- mould:if blob_storage == s3 -->
+
+### Blob Storage (S3)
+
+`src/lib/s3.ts` exports a shared
+[`@aws-sdk/client-s3`](https://www.npmjs.com/package/@aws-sdk/client-s3)
+client configured from the `S3_*` environment variables, and the bucket to
+use:
+
+```ts
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { getS3Bucket, getS3Client } from "@/lib/s3";
+
+await getS3Client().send(
+  new PutObjectCommand({ Bucket: getS3Bucket(), Key: "notes/hello.txt", Body: "Hello!" }),
+);
+```
+
+In development it talks to the `s3` service in `docker-compose.yml`
+([RustFS](https://rustfs.com), an S3-compatible object store), which
+`.env.local` is already configured for. Start it before `bun run dev`:
+
+```bash
+docker compose up -d --wait s3
+```
+
+The `dev-bucket` bucket is created automatically, and objects persist in the
+`s3-data` Docker volume (`docker compose down -v` wipes them). Browse them in
+the web console at
+[http://localhost:9001/rustfs/console/](http://localhost:9001/rustfs/console/) (access key
+`s3-dev-access-key`, secret key `s3-dev-secret-key`).
+
+In production, set the `S3_*` variables listed in `.env.example` for AWS S3 or
+any S3-compatible provider (Cloudflare R2, Backblaze B2, ...).
+<!-- mould:endif -->
 
 ## Claude Code Skills
 
-Alongside the `database-migrations` skill above, this project ships with two
-more Claude Code skills in `.claude/skills/`:
+Alongside the `database-migrations` skill above, this project ships with
+these Claude Code skills in `.claude/skills/`:
 
 - `nextjs-docs` points coding agents at the version-matched Next.js
   documentation bundled with the installed `next` package
@@ -121,3 +156,7 @@ more Claude Code skills in `.claude/skills/`:
 - `api-routes` explains how to add API endpoints with
   `@schemavaults/openapi-operations` so they are validated, served by Hono and
   registered in `/openapi.json` and `/docs`.
+<!-- mould:if blob_storage == s3 -->
+- `blob-storage` explains how to store and serve files with the S3 client in
+  `src/lib/s3.ts`.
+<!-- mould:endif -->

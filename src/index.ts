@@ -15,6 +15,8 @@ import { fetchSchemavaultsVersions } from "./npm-versions.js";
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
 const deploymentSchema = z.enum(["vercel", "none"]);
 type DeploymentStrategy = z.infer<typeof deploymentSchema>;
+const blobStorageSchema = z.enum(["s3", "none"]);
+type BlobStorage = z.infer<typeof blobStorageSchema>;
 
 export const DEFAULT_AUTH_SERVER_URL = "https://auth.schemavaults.com";
 const authServerUrlSchema = z
@@ -33,6 +35,20 @@ async function promptForDeployment(): Promise<DeploymentStrategy> {
       return parsed.data;
     }
     console.error("Error: deployment must be one of: vercel, none.");
+  }
+}
+
+async function promptForBlobStorage(): Promise<BlobStorage> {
+  for (;;) {
+    const value = await prompt("Blob storage (s3/none) [none]: ");
+    if (!value) {
+      return "none";
+    }
+    const parsed = blobStorageSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data;
+    }
+    console.error("Error: blob storage must be one of: s3, none.");
   }
 }
 
@@ -92,6 +108,10 @@ const program = new Command()
     "--deployment <deployment_strategy>",
     "deployment strategy: 'vercel' or 'none'",
   )
+  .option(
+    "--blob-storage <provider>",
+    "blob storage: 's3' (S3 client + local S3 service in docker-compose.yml) or 'none' (default when prompted)",
+  )
   .action(
     async (
       projectNameArg: string | undefined,
@@ -102,6 +122,7 @@ const program = new Command()
         apiServerId?: string;
         authServerUrl?: string;
         deployment?: string;
+        blobStorage?: string;
       },
     ) => {
       let projectName = projectNameArg;
@@ -204,6 +225,20 @@ const program = new Command()
         deployment = await promptForDeployment();
       }
 
+      let blobStorage: BlobStorage;
+      if (opts.blobStorage !== undefined) {
+        const parsed = blobStorageSchema.safeParse(opts.blobStorage);
+        if (!parsed.success) {
+          console.error(
+            "Error: --blob-storage must be one of: s3, none.",
+          );
+          process.exit(1);
+        }
+        blobStorage = parsed.data;
+      } else {
+        blobStorage = await promptForBlobStorage();
+      }
+
       const targetDir = resolve(process.cwd(), projectName);
 
       if (existsSync(targetDir)) {
@@ -225,6 +260,7 @@ const program = new Command()
           apiServerId,
           authServerUrl,
           deployment,
+          blobStorage,
           schemavaultsPackageVersions,
         });
       } catch (err: unknown) {
@@ -260,24 +296,38 @@ const program = new Command()
         );
       }
 
+      const nextSteps: string[] = [
+        "Review .env.example to see the required environment variables.",
+        `Set SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY before runtime.
+     Generate keys here:
+     ${authServerUrl}/apis/${apiServerId}/jwks-access-keys`,
+        `Set your Postgres credentials (POSTGRES_URL, POSTGRES_USER,
+     POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE, etc.).`,
+      ];
+      if (blobStorage === "s3") {
+        nextSteps.push(
+          `Set your production S3 bucket and credentials (S3_BUCKET, S3_REGION,
+     S3_ACCESS_KEY_ID, S3_SECRET_ACCESS_KEY, etc.). .env.local already
+     points at the local S3 service in docker-compose.yml.`,
+          `Start the local S3 service and the dev server:
+
+       cd ${projectName}
+       docker compose up -d --wait s3
+       bun dev`,
+        );
+      } else {
+        nextSteps.push(`Start the dev server:
+
+       cd ${projectName}
+       bun dev`);
+      }
+
       console.log(`
 Done! Your project is ready.
 
 Suggested Next Steps:
 
-  1. Review .env.example to see the required environment variables.
-
-  2. Set SCHEMAVAULTS_AUTH_JWKS_ACCESS_PRIVATE_KEY before runtime.
-     Generate keys here:
-     ${authServerUrl}/apis/${apiServerId}/jwks-access-keys
-
-  3. Set your Postgres credentials (POSTGRES_URL, POSTGRES_USER,
-     POSTGRES_HOST, POSTGRES_PASSWORD, POSTGRES_DATABASE, etc.).
-
-  4. Start the dev server:
-
-       cd ${projectName}
-       bun dev
+${nextSteps.map((step, index) => `  ${index + 1}. ${step}`).join("\n\n")}
 `);
     },
   );

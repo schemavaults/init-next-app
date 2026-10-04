@@ -6,6 +6,8 @@ Every scaffolded app also ships a typed HTTP API layer built on [`@schemavaults/
 
 When initializing a project, the CLI also installs the [@schemavaults/dbh](https://github.com/schemavaults/dbh) `database-migrations` Claude Code skill into the new project's `.claude/skills/` (via `npx skills add`), so coding agents know how to author migrations in the format this template scaffolds. It additionally scaffolds a `nextjs-docs` skill that points coding agents at the version-matched Next.js documentation bundled with the installed `next` package (`node_modules/next/dist/docs/`) instead of web searches or memory.
 
+Apps that need blob storage can opt in with `--blob-storage s3`: they get a pre-configured S3 client and an S3-compatible object store ([RustFS](https://rustfs.com)) in `docker-compose.yml` for local development.
+
 ## Usage
 
 Use the [latest version of @schemavaults/init-next-app published to NPM](https://www.npmjs.com/package/@schemavaults/init-next-app):
@@ -25,7 +27,9 @@ npx @schemavaults/init-next-app my-new-app-name \
   --description "A short description of my new app" \
   --client-app-id "my-new-app" \
   --api-server-id "my-api-server" \
-  --auth-server-url "https://auth.schemavaults.com"
+  --auth-server-url "https://auth.schemavaults.com" \
+  --deployment "vercel" \
+  --blob-storage "s3"
 ```
 
 | Flag | Description |
@@ -36,6 +40,7 @@ npx @schemavaults/init-next-app my-new-app-name \
 | `--api-server-id <id>` | `SCHEMAVAULTS_API_SERVER_ID` written to `.env.local`. Validated with `apiServerIdSchema` from [`@schemavaults/app-definitions`](https://www.npmjs.com/package/@schemavaults/app-definitions) (same format as `--client-app-id`). |
 | `--auth-server-url <url>` | `SCHEMAVAULTS_AUTH_SERVER_URL` written to `.env.local` (must be an http(s) URL). Defaults to `https://auth.schemavaults.com`; set this to point the app at a self-hosted auth server, e.g. `https://auth.acmecorp.com`. When prompted interactively, press enter to accept the default. |
 | `--deployment <strategy>` | `vercel` or `none`. With `vercel`, the app also gets a `vercel.json`, a `publish-to-vercel` job in `.github/workflows/ci.yml`, and `VERCEL_*` entries in `.env.example`. |
+| `--blob-storage <provider>` | `s3` or `none`; when prompted interactively, press enter for `none`. With `s3`, the app also gets `src/lib/s3.ts` (a shared [`@aws-sdk/client-s3`](https://www.npmjs.com/package/@aws-sdk/client-s3) client configured from `S3_*` environment variables, for AWS S3 or any S3-compatible provider), an `s3` service in `docker-compose.yml` running [RustFS](https://rustfs.com) with a `dev-bucket` bucket that `.env.local` points at, `S3_*` entries in `.env.example`, and a `blob-storage` Claude Code skill. |
 
 ## How it works
 
@@ -50,13 +55,18 @@ project as-is, apart from:
   server URL is substituted from its literal default `https://auth.schemavaults.com`.
 - **Conditional blocks** wrapped in `# mould:if deployment == vercel` … `# mould:endif` comment
   lines (`.github/workflows/ci.yml`, `.env.example`), and `vercel.json`, which is only copied when
-  `--deployment vercel` is chosen.
+  `--deployment vercel` is chosen. Likewise `blob_storage == s3` blocks (`docker-compose.yml`,
+  `_env.local`, `.env.example`, `README.md`), and `src/lib/s3.ts` and the `blob-storage` skill,
+  which are only copied with `--blob-storage s3`.
 - **`_gitignore`** and **`_env.local`**, written to the new project as `.gitignore` and
   `.env.local`. npm would otherwise rename a real `.gitignore` inside the published package, and
   keeping every `.env*` (other than `.env.example`) out of the template means a real env file can
   never be committed or shipped by accident.
 - **`@schemavaults/*` versions** in `package.json`, which the CLI bumps to the latest published
   versions after rendering; the template pins real versions so it installs on its own.
+- **Optional dependencies** in `package.json`. JSON cannot hold conditional blocks, so the template
+  always depends on `@aws-sdk/client-s3` (and so type-checks `src/lib/s3.ts`); the CLI removes it
+  unless `--blob-storage s3` is chosen.
 
 The mapping is declared in [`.mouldconfig.json`](./templates/schemavaults-next-app/.mouldconfig.json).
 After rendering, the CLI runs `bun install`, `bun run auth-codegen` and installs the
@@ -103,5 +113,6 @@ Rules of thumb:
 ## Tests
 ```bash
 bun run test            # end-to-end: pack, scaffold test-app from the tarball, install, typecheck, lint, build
+bun run test none none  # the same with --deployment none --blob-storage none (defaults: vercel s3)
 bun run test:template   # the template directory itself installs, type-checks and lints
 ```
