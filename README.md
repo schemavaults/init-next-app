@@ -6,6 +6,12 @@ Every scaffolded app also ships a typed HTTP API layer built on [`@schemavaults/
 
 When initializing a project, the CLI also installs the [@schemavaults/dbh](https://github.com/schemavaults/dbh) `database-migrations` Claude Code skill into the new project's `.claude/skills/` (via `npx skills add`), so coding agents know how to author migrations in the format this template scaffolds. It additionally scaffolds a `nextjs-docs` skill that points coding agents at the version-matched Next.js documentation bundled with the installed `next` package (`node_modules/next/dist/docs/`) instead of web searches or memory.
 
+Scaffolded apps also ship Claude Code skills for coding conventions: `commit-changes` (raise the app's
+`package.json` version by semver on every branch), `small-modules` (keep files under about 200
+lines; the app's eslint config warns above 200 lines and fails above 350),
+`react19-no-forward-ref` (pass `ref` as a prop) and `react19-use-transition` (track pending form
+submissions with `useTransition` instead of a manual loading flag).
+
 Apps that need blob storage can opt in with `--blob-storage s3`: they get a pre-configured S3 client and an S3-compatible object store ([RustFS](https://rustfs.com)) in `docker-compose.yml` for local development.
 
 ## Usage
@@ -109,6 +115,14 @@ Rules of thumb:
   `files` entries in the root `package.json` (so `npm pack` never ships them — a checkout where
   the template was just installed would otherwise put its `node_modules/` in the tarball).
 - `scripts/test-template.sh` checks all of the above and that the template type-checks.
+
+## Releasing
+
+CI publishes the package to npm on every push to `main`, and npm rejects a version that is already
+published. Every branch must therefore raise `version` in `package.json` by semver once before it is
+merged. While the version is 0.x, breaking CLI changes bump minor and everything else bumps patch.
+The repository's `commit-changes` Claude Code skill (`.claude/skills/commit-changes/`) walks coding
+agents through it.
 
 ## Tests
 ```bash

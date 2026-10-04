@@ -94,4 +94,34 @@ bun run typecheck
 echo "==> Linting the template"
 bun run lint
 
+echo "==> Asserting eslint warns on files over 200 lines and fails over 350"
+CHECK_DIR="src/lib/__max-lines-check__"
+rm -rf "$CHECK_DIR" && mkdir -p "$CHECK_DIR"
+trap 'rm -rf "$CHECK_DIR"' EXIT
+for n in 200 201 351; do
+  for i in $(seq 1 "$n"); do echo "export const v$i = $i;"; done >"$CHECK_DIR/lines-$n.ts"
+done
+npx eslint --format json "$CHECK_DIR" >"$CHECK_DIR/report.json" || true
+node - "$CHECK_DIR/report.json" <<'NODE'
+const report = JSON.parse(require("fs").readFileSync(process.argv[2], "utf8"));
+const found = Object.fromEntries(report.map((r) => [
+  r.filePath.split("/").pop(),
+  r.messages.map((m) => `${m.ruleId}:${m.severity}`).sort().join(","),
+]));
+const expected = {
+  "lines-200.ts": "",
+  "lines-201.ts": "max-lines:1",
+  "lines-351.ts": "max-lines:1,small-modules/max-lines:2",
+};
+for (const [file, want] of Object.entries(expected)) {
+  if (found[file] !== want) {
+    console.error(`  x ${file}: expected [${want}], got [${found[file]}]`);
+    process.exitCode = 1;
+  }
+}
+if (!process.exitCode) console.log("  ok: 200 lines pass, 201 warn, 351 fail");
+NODE
+rm -rf "$CHECK_DIR"
+trap - EXIT
+
 echo "==> Template checks passed"
