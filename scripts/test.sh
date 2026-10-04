@@ -170,6 +170,13 @@ test -s test-app/.claude/skills/api-routes/SKILL.md
 grep -q 'name: api-routes' test-app/.claude/skills/api-routes/SKILL.md
 grep -q 'defineApiOperation' test-app/.claude/skills/api-routes/SKILL.md
 
+echo "==> Asserting the convention Claude skills were scaffolded"
+for skill in commit-changes small-modules react19-no-forward-ref react19-use-transition; do
+  test -s "test-app/.claude/skills/$skill/SKILL.md"
+  grep -q "name: $skill" "test-app/.claude/skills/$skill/SKILL.md"
+done
+grep -q 'small-modules/max-lines' test-app/eslint.config.cjs
+
 echo "==> Asserting the OpenAPI API scaffolding"
 test -f test-app/src/lib/api/operation.ts
 test -f test-app/src/lib/api/operations.ts

@@ -5,6 +5,13 @@ const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const globals = require("globals");
 const nextVitals = require('eslint-config-next/core-web-vitals')
 const nextTypescript = require('eslint-config-next/typescript')
+const { builtinRules } = require("eslint/use-at-your-own-risk");
+
+// ESLint allows one severity per rule, so the core max-lines rule is registered
+// again under this plugin to warn and to fail at different file lengths.
+const smallModules = {
+  rules: { "max-lines": builtinRules.get("max-lines") },
+};
 
 
 module.exports = [
@@ -64,6 +71,18 @@ module.exports = [
       ],
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-empty-object-type": "off",
+    },
+  },
+
+  // Keep modules small enough to review (.claude/skills/small-modules):
+  // warn above 200 lines, fail above 350. Generated code is exempt.
+  {
+    files: ["src/**/*.{ts,tsx,js,jsx}"],
+    ignores: ["src/app/(client)/auth/**"],
+    plugins: { "small-modules": smallModules },
+    rules: {
+      "max-lines": ["warn", { max: 200 }],
+      "small-modules/max-lines": ["error", { max: 350 }],
     },
   },
 

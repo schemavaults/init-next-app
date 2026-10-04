@@ -40,7 +40,8 @@ Start the production server.
 bun run lint
 ```
 
-Run linting.
+Run linting. Besides the usual rules, eslint warns when a file under `src/`
+grows past 200 lines and fails past 350 (see the `small-modules` skill).
 
 ### Type Check
 
@@ -156,6 +157,15 @@ these Claude Code skills in `.claude/skills/`:
 - `api-routes` explains how to add API endpoints with
   `@schemavaults/openapi-operations` so they are validated, served by Hono and
   registered in `/openapi.json` and `/docs`.
+- `commit-changes` has coding agents raise the `package.json` version by
+  semver once per branch and run the checks before committing.
+- `small-modules` asks agents to keep files under about 200 lines so people
+  can review them, and explains how to split them.
+- `react19-no-forward-ref` has agents pass refs as regular props instead of
+  using `forwardRef`, which React 19 deprecates.
+- `react19-use-transition` has agents track pending form submissions with
+  `useTransition` and an async function instead of a hand-managed loading
+  flag.
 <!-- mould:if blob_storage == s3 -->
 - `blob-storage` explains how to store and serve files with the S3 client in
   `src/lib/s3.ts`.

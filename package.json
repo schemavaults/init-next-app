@@ -1,6 +1,6 @@
 {
   "name": "@schemavaults/init-next-app",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "module": "./dist/index.js",
   "repository": {
@@ -34,7 +34,8 @@
     "dev": "bun build src/index.ts --outdir dist --target node --format esm --banner '#!/usr/bin/env node' --watch",
     "test": "bash ./scripts/test.sh",
     "typecheck": "tsc --noEmit",
-    "test:template": "bash ./scripts/test-template.sh"
+    "test:template": "bash ./scripts/test-template.sh",
+    "check:version": "bun scripts/check-version.ts"
   },
   "devDependencies": {
     "bun-types": "1.4.2",
