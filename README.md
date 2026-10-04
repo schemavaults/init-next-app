@@ -14,6 +14,8 @@ submissions with `useTransition` instead of a manual loading flag).
 
 Apps that need blob storage can opt in with `--blob-storage s3`: they get a pre-configured S3 client and an S3-compatible object store ([RustFS](https://rustfs.com)) in `docker-compose.yml` for local development.
 
+Each deployment can re-theme its app without code changes: `THEME_*` environment variables (`THEME_LIGHT_PRIMARY`, `THEME_DARK_PRIMARY`, `THEME_RADIUS`, ...) override [@schemavaults/theme](https://github.com/schemavaults/theme)'s tokens on every root document (`layout.tsx`, `global-not-found.tsx` and `global-error.tsx`); see the "Theme" section of the generated app's `README.md`.
+
 ## Usage
 
 Use the [latest version of @schemavaults/init-next-app published to NPM](https://www.npmjs.com/package/@schemavaults/init-next-app):

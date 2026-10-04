@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 import ClientGlobalProviders from "./client-global-providers";
+import themeOverrideStyle from "@/lib/themeOverrideStyle";
 import "@schemavaults/theme/globals.css";
 
 export const metadata: Metadata = {
@@ -16,6 +17,7 @@ export default function RootLayout({
     <html
       lang="en"
       className="overscroll-none w-full min-h-dvh"
+      style={themeOverrideStyle()}
       suppressHydrationWarning
     >
       <body className="bg-background w-full min-h-dvh">

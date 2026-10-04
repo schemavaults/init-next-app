@@ -146,6 +146,41 @@ In production, set the `S3_*` variables listed in `.env.example` for AWS S3 or
 any S3-compatible provider (Cloudflare R2, Backblaze B2, ...).
 <!-- mould:endif -->
 
+## Theme
+
+Colours and the corner radius come from
+[`@schemavaults/theme`](https://www.npmjs.com/package/@schemavaults/theme).
+Each deployment can override them with environment variables, without code
+changes:
+
+```bash
+THEME_LIGHT_PRIMARY="#2563eb"   # a token in light mode
+THEME_DARK_PRIMARY="#3b82f6"    # the same token in dark mode
+THEME_RADIUS="0.75rem"          # tokens shared by both modes take no LIGHT_/DARK_
+```
+
+A variable's name is the token id upper-cased, with hyphens as underscores
+(`sidebar-active-start` → `THEME_LIGHT_SIDEBAR_ACTIVE_START`). Tokens include
+`brand-blue`, `brand-red`, `background`, `foreground`, `primary`, `secondary`,
+`muted`, `accent`, `destructive`, `border`, `ring`, `radius`, the `sidebar-*`
+colours and `chart-1` … `chart-8`; `THEME_TOKENS` from
+`@schemavaults/theme/tokens` lists them all. Give colours as hex, `rgb()` or
+`hsl()`. A value a token can't take is logged as a warning and ignored, so
+the default applies.
+
+`src/lib/themeOverrideStyle.ts` turns the variables into the `--sv-theme-*`
+custom properties `@schemavaults/theme/globals.css` reads, set on `<html>` by
+each root document: `src/app/layout.tsx`, `src/app/global-not-found.tsx`
+(the 404 page for unmatched URLs) and `src/app/global-error.tsx`. The last
+is a Client Component, so it copies them from the page it replaces
+(`src/lib/themeOverrideStyleFromDocument.ts`).
+
+The variables are read when a page renders. Every page in this app renders
+per request, so variables set at runtime (such as `.env.production` in
+`docker-compose.yml`) apply. A page that Next.js prerenders reads them at
+build time instead, so set them where `next build` runs too. The Docker build
+copies no `.env*` files.
+
 ## Claude Code Skills
 
 Alongside the `database-migrations` skill above, this project ships with
