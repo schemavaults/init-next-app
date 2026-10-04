@@ -67,6 +67,16 @@ npm version patch --no-git-tag-version   # or minor / major / an explicit 0.2.0
 
 No other file records the package's version (`bun.lock` doesn't).
 
+Then confirm the version can be published:
+
+```bash
+bun run check:version   # fails if it's already on npm or not above npm's latest
+```
+
+CI runs the same check as the `version` job on every pull request and before
+`publish`. GitHub doesn't rerun it when `main` moves, so if another branch
+published the same version first, merge `main` in and bump again.
+
 ## 3. Check before committing
 
 Run what covers your change. CI runs all of it, across every

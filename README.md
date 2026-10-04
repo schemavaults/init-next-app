@@ -121,8 +121,9 @@ Rules of thumb:
 CI publishes the package to npm on every push to `main`, and npm rejects a version that is already
 published. Every branch must therefore raise `version` in `package.json` by semver once before it is
 merged. While the version is 0.x, breaking CLI changes bump minor and everything else bumps patch.
-The repository's `commit-changes` Claude Code skill (`.claude/skills/commit-changes/`) walks coding
-agents through it.
+`bun run check:version` (also the `version` job in CI, on every pull request) fails when the version
+is already published or not above npm's latest. The repository's `commit-changes` Claude Code skill
+(`.claude/skills/commit-changes/`) walks coding agents through it.
 
 ## Tests
 ```bash

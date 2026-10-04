@@ -15,6 +15,21 @@ env:
   BUN_VERSION: 1.4.2
 
 jobs:
+  version:
+    name: package.json version is not published yet
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Check the version can be published
+        run: bun run check:version
+
   build-and-test:
     runs-on: ubuntu-latest
     strategy:
@@ -54,7 +69,7 @@ jobs:
         run: ./scripts/test-template.sh
 
   publish:
-    needs: [build-and-test, template]
+    needs: [version, build-and-test, template]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
