@@ -2,6 +2,7 @@
 import { useState, type ReactElement } from "react";
 import { ErrorPage } from "@schemavaults/ui";
 import themeOverrideStyleFromDocument from "@/lib/themeOverrideStyleFromDocument";
+import appWordmarkProps from "@/lib/appWordmarkProps";
 import "@schemavaults/theme/globals.css";
 
 interface GlobalErrorProps {
@@ -15,7 +16,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps): ReactEl
   return (
     <html lang="en" style={style}>
       <body>
-        <ErrorPage error={error} reset={reset} />
+        <ErrorPage error={error} reset={reset} wordmarkProps={appWordmarkProps} />
       </body>
     </html>
   );

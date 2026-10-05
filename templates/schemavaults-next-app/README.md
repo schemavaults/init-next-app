@@ -175,6 +175,13 @@ each root document: `src/app/layout.tsx`, `src/app/global-not-found.tsx`
 is a Client Component, so it copies them from the page it replaces
 (`src/lib/themeOverrideStyleFromDocument.ts`).
 
+The error pages (`not-found.tsx`, `global-not-found.tsx` and
+`global-error.tsx`) head with the app's name in the theme's accent gradient,
+`sidebar-active-start` → `sidebar-active-end`, which follows `brand-blue` →
+`brand-red` unless set. `src/lib/appWordmarkProps.ts` sets both; pass it as
+`wordmarkProps` to any other `@schemavaults/ui` component that renders a
+wordmark.
+
 The variables are read when a page renders. Every page in this app renders
 per request, so variables set at runtime (such as `.env.production` in
 `docker-compose.yml`) apply. A page that Next.js prerenders reads them at

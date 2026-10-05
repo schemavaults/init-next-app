@@ -4,6 +4,7 @@ import { connection } from "next/server";
 import { ErrorPage } from "@schemavaults/ui";
 import ClientGlobalProviders from "./client-global-providers";
 import themeOverrideStyle from "@/lib/themeOverrideStyle";
+import appWordmarkProps from "@/lib/appWordmarkProps";
 import "@schemavaults/theme/globals.css";
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default async function GlobalNotFound(): Promise<ReactElement> {
     >
       <body className="bg-background w-full min-h-dvh">
         <ClientGlobalProviders>
-          <ErrorPage error={404} message="Page not found" />
+          <ErrorPage error={404} message="Page not found" wordmarkProps={appWordmarkProps} />
         </ClientGlobalProviders>
       </body>
     </html>
