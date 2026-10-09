@@ -4,6 +4,7 @@
 SCHEMAVAULTS_CLIENT_APP_ID="xxx_client_app_id_xxx"
 SCHEMAVAULTS_API_SERVER_ID="xxx_api_server_id_xxx"
 SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"
+SCHEMAVAULTS_AUTH_SERVER_APP_ID="xxx_auth_server_app_id_xxx"
 # mould:if blob_storage == s3
 
 # Blob Storage: the local `s3` service from docker-compose.yml

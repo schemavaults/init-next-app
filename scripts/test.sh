@@ -74,6 +74,7 @@ if $CLI reject-test-app \
   --client-app-id "Not A Valid ID!" \
   --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
+  --auth-server-app-id "test-auth-server" \
   --deployment "$DEPLOYMENT" \
   --blob-storage "$BLOB_STORAGE" >/dev/null 2>&1; then
   echo "Expected invalid --client-app-id to be rejected" >&2
@@ -87,12 +88,67 @@ if $CLI reject-test-app \
   --client-app-id "test-client-app" \
   --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
+  --auth-server-app-id "test-auth-server" \
   --deployment "$DEPLOYMENT" \
   --blob-storage "gcs" >/dev/null 2>&1; then
   echo "Expected --blob-storage gcs to be rejected" >&2
   exit 1
 fi
+
+echo "==> Asserting an invalid --auth-server-app-id is rejected"
+if $CLI reject-test-app \
+  --display-name "Test App" \
+  --description "A test project" \
+  --client-app-id "test-client-app" \
+  --api-server-id "test-api-server" \
+  --auth-server-url "https://auth.schemavaults.com" \
+  --auth-server-app-id "Not A Valid ID!" \
+  --deployment "$DEPLOYMENT" \
+  --blob-storage "$BLOB_STORAGE" >/dev/null 2>&1; then
+  echo "Expected invalid --auth-server-app-id to be rejected" >&2
+  exit 1
+fi
 test ! -e reject-test-app
+
+echo "==> Asserting the SCHEMAVAULTS_AUTH_SERVER_APP_ID prompt is prefilled from the auth server"
+# A stand-in auth server publishing a custom app id at /api/config/app-id;
+# every other path 404s, like an auth server that predates the endpoint.
+node -e '
+  require("http").createServer((req, res) => {
+    if (req.url !== "/api/config/app-id") { res.statusCode = 404; return res.end(); }
+    res.setHeader("Content-Type", "application/json");
+    res.end(JSON.stringify({ error: false, success: true, message: "ok", data: { app_id: "acme-auth" } }));
+  }).listen(0, "127.0.0.1", function () { console.log(this.address().port); });
+' >tmp/app-id-server.port &
+APP_ID_SERVER_PID=$!
+trap 'kill "$APP_ID_SERVER_PID" 2>/dev/null || true' EXIT
+for _ in $(seq 1 50); do [ -s tmp/app-id-server.port ] && break; sleep 0.1; done
+APP_ID_SERVER_URL="http://127.0.0.1:$(cat tmp/app-id-server.port)"
+# Answer the prompt with enter. The target directory already exists, so the
+# CLI exits right after the prompts, before scaffolding anything.
+mkdir -p tmp/existing-app
+prompt_for_auth_server_app_id() {
+  (cd tmp && printf '\n' | $CLI existing-app \
+    --display-name "Test App" \
+    --description "A test project" \
+    --client-app-id "test-client-app" \
+    --api-server-id "test-api-server" \
+    --auth-server-url "$1" \
+    --deployment "$DEPLOYMENT" \
+    --blob-storage "$BLOB_STORAGE" 2>&1 || true)
+}
+PROMPT_OUTPUT="$(prompt_for_auth_server_app_id "$APP_ID_SERVER_URL")"
+grep -qF 'SCHEMAVAULTS_AUTH_SERVER_APP_ID [acme-auth]: ' <<<"$PROMPT_OUTPUT"
+grep -qF 'directory "existing-app" already exists' <<<"$PROMPT_OUTPUT"
+if grep -q 'Warning: could not fetch' <<<"$PROMPT_OUTPUT"; then
+  echo "Expected no warning when the auth server publishes its app id" >&2
+  exit 1
+fi
+PROMPT_OUTPUT="$(prompt_for_auth_server_app_id "$APP_ID_SERVER_URL/missing")"
+grep -qF "Warning: could not fetch the auth server's app id from $APP_ID_SERVER_URL/missing/api/config/app-id: HTTP 404" <<<"$PROMPT_OUTPUT"
+grep -qF 'SCHEMAVAULTS_AUTH_SERVER_APP_ID [schemavaults-auth]: ' <<<"$PROMPT_OUTPUT"
+kill "$APP_ID_SERVER_PID" 2>/dev/null || true
+trap - EXIT
 
 echo "==> Scaffolding test app"
 $CLI test-app \
@@ -101,6 +157,7 @@ $CLI test-app \
   --client-app-id "test-client-app" \
   --api-server-id "test-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
+  --auth-server-app-id "test-auth-server" \
   --deployment "$DEPLOYMENT" \
   --blob-storage "$BLOB_STORAGE"
 
@@ -145,6 +202,7 @@ test -f test-app/.env.local
 grep -q 'SCHEMAVAULTS_CLIENT_APP_ID="test-client-app"' test-app/.env.local
 grep -q 'SCHEMAVAULTS_API_SERVER_ID="test-api-server"' test-app/.env.local
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.local
+grep -q 'SCHEMAVAULTS_AUTH_SERVER_APP_ID="test-auth-server"' test-app/.env.local
 grep -q 'ARG SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/Dockerfile
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL: https://auth.schemavaults.com' test-app/.github/workflows/ci.yml
 test -f test-app/cypress/tsconfig.json
@@ -205,6 +263,8 @@ grep -q 'openapi:check' test-app/.github/workflows/ci.yml
 
 test -f test-app/.env.example
 grep -q 'SCHEMAVAULTS_AUTH_SERVER_URL="https://auth.schemavaults.com"' test-app/.env.example
+grep -q 'SCHEMAVAULTS_AUTH_SERVER_APP_ID="test-auth-server"' test-app/.env.example
+grep -q 'published at https://auth.schemavaults.com/api/config/app-id' test-app/.env.example
 
 if [ "$DEPLOYMENT" = "vercel" ]; then
   echo "==> Asserting vercel-specific scaffolding"
