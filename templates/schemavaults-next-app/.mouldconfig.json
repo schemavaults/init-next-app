@@ -45,6 +45,14 @@
       "default": "https://auth.schemavaults.com"
     },
     {
+      "id": "auth_server_app_id",
+      "label": "SCHEMAVAULTS_AUTH_SERVER_APP_ID",
+      "description": "The auth server's own app id (published at <auth server URL>/api/config/app-id); written to .env.local and .env.example",
+      "required": false,
+      "type": "text",
+      "default": "schemavaults-auth"
+    },
+    {
       "id": "deployment",
       "label": "Deployment strategy",
       "required": false,
@@ -106,6 +114,10 @@
     {
       "find": "https://auth.schemavaults.com",
       "input": "auth_server_url"
+    },
+    {
+      "find": "xxx_auth_server_app_id_xxx",
+      "input": "auth_server_app_id"
     },
     {
       "find": "xxx_dbh_version_xxx",

@@ -120,6 +120,7 @@ export interface GenerateProjectOptions {
   clientAppId: string;
   apiServerId: string;
   authServerUrl: string;
+  authServerAppId: string;
   deployment: "vercel" | "none";
   blobStorage: "s3" | "none";
   schemavaultsPackageVersions: Record<SchemaVaultsPackageDependency, string>;
@@ -146,6 +147,7 @@ export async function generateProject(
       client_app_id: options.clientAppId,
       api_server_id: options.apiServerId,
       auth_server_url: options.authServerUrl,
+      auth_server_app_id: options.authServerAppId,
       deployment: options.deployment,
       blob_storage: options.blobStorage,
       dbh_version: options.schemavaultsPackageVersions["@schemavaults/dbh"],

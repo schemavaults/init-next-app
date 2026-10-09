@@ -11,6 +11,10 @@ import { MouldError } from "@jalexw/mould";
 import { prompt } from "./prompt.js";
 import { generateProject } from "./generate.js";
 import { fetchSchemavaultsVersions } from "./npm-versions.js";
+import {
+  AUTH_SERVER_APP_ID_PATH,
+  prefillAuthServerAppId,
+} from "./auth-server-app-id.js";
 
 const NAME_RE = /^[a-zA-Z0-9_-]+$/;
 const deploymentSchema = z.enum(["vercel", "none"]);
@@ -74,6 +78,30 @@ function formatIdIssues(error: z.ZodError<string>): string {
   return error.issues.map((issue) => issue.message).join(" ");
 }
 
+async function promptForAuthServerAppId(
+  authServerUrl: string,
+): Promise<string> {
+  console.log(
+    `Fetching the auth server's app id from ${authServerUrl}${AUTH_SERVER_APP_ID_PATH}...`,
+  );
+  const defaultAppId: string = await prefillAuthServerAppId(authServerUrl);
+  for (;;) {
+    const value = await prompt(
+      `SCHEMAVAULTS_AUTH_SERVER_APP_ID [${defaultAppId}]: `,
+    );
+    if (!value) {
+      return defaultAppId;
+    }
+    const parsed = appIdSchema.safeParse(value);
+    if (parsed.success) {
+      return parsed.data;
+    }
+    console.error(
+      `Error: invalid SCHEMAVAULTS_AUTH_SERVER_APP_ID. ${formatIdIssues(parsed.error)}`,
+    );
+  }
+}
+
 async function promptForId(
   label: string,
   schema: z.ZodType<string>,
@@ -105,6 +133,10 @@ const program = new Command()
     `SCHEMAVAULTS_AUTH_SERVER_URL for .env.local (defaults to ${DEFAULT_AUTH_SERVER_URL})`,
   )
   .option(
+    "--auth-server-app-id <id>",
+    `SCHEMAVAULTS_AUTH_SERVER_APP_ID for .env.local and .env.example (when prompted, defaults to the id the auth server publishes at ${AUTH_SERVER_APP_ID_PATH})`,
+  )
+  .option(
     "--deployment <deployment_strategy>",
     "deployment strategy: 'vercel' or 'none'",
   )
@@ -121,6 +153,7 @@ const program = new Command()
         clientAppId?: string;
         apiServerId?: string;
         authServerUrl?: string;
+        authServerAppId?: string;
         deployment?: string;
         blobStorage?: string;
       },
@@ -211,6 +244,20 @@ const program = new Command()
         authServerUrl = await promptForAuthServerUrl();
       }
 
+      let authServerAppId: string;
+      if (opts.authServerAppId !== undefined) {
+        const parsed = appIdSchema.safeParse(opts.authServerAppId);
+        if (!parsed.success) {
+          console.error(
+            `Error: invalid --auth-server-app-id. ${formatIdIssues(parsed.error)}`,
+          );
+          process.exit(1);
+        }
+        authServerAppId = parsed.data;
+      } else {
+        authServerAppId = await promptForAuthServerAppId(authServerUrl);
+      }
+
       let deployment: DeploymentStrategy;
       if (opts.deployment !== undefined) {
         const parsed = deploymentSchema.safeParse(opts.deployment);
@@ -259,6 +306,7 @@ const program = new Command()
           clientAppId,
           apiServerId,
           authServerUrl,
+          authServerAppId,
           deployment,
           blobStorage,
           schemavaultsPackageVersions,

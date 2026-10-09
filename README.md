@@ -36,6 +36,7 @@ npx @schemavaults/init-next-app my-new-app-name \
   --client-app-id "my-new-app" \
   --api-server-id "my-api-server" \
   --auth-server-url "https://auth.schemavaults.com" \
+  --auth-server-app-id "schemavaults-auth" \
   --deployment "vercel" \
   --blob-storage "s3"
 ```
@@ -47,6 +48,7 @@ npx @schemavaults/init-next-app my-new-app-name \
 | `--client-app-id <id>` | `SCHEMAVAULTS_CLIENT_APP_ID` written to `.env.local`. Validated with `appIdSchema` from [`@schemavaults/app-definitions`](https://www.npmjs.com/package/@schemavaults/app-definitions): 2-64 characters of lowercase alphanumerics, hyphens, and underscores, starting with an alphanumeric and not ending with a hyphen or underscore (UUIDs remain valid). |
 | `--api-server-id <id>` | `SCHEMAVAULTS_API_SERVER_ID` written to `.env.local`. Validated with `apiServerIdSchema` from [`@schemavaults/app-definitions`](https://www.npmjs.com/package/@schemavaults/app-definitions) (same format as `--client-app-id`). |
 | `--auth-server-url <url>` | `SCHEMAVAULTS_AUTH_SERVER_URL` written to `.env.local` (must be an http(s) URL). Defaults to `https://auth.schemavaults.com`; set this to point the app at a self-hosted auth server, e.g. `https://auth.acmecorp.com`. When prompted interactively, press enter to accept the default. |
+| `--auth-server-app-id <id>` | `SCHEMAVAULTS_AUTH_SERVER_APP_ID` written to `.env.local` and `.env.example`: the auth server's own app id (validated like `--client-app-id`). When prompted interactively, the CLI first fetches the id the auth server publishes at `<auth-server-url>/api/config/app-id` and offers it as the default (press enter to accept it); if that request fails (e.g. an auth server that predates the endpoint), it prints a warning and offers `schemavaults-auth` instead. |
 | `--deployment <strategy>` | `vercel` or `none`. With `vercel`, the app also gets a `vercel.json`, a `publish-to-vercel` job in `.github/workflows/ci.yml`, and `VERCEL_*` entries in `.env.example`. |
 | `--blob-storage <provider>` | `s3` or `none`; when prompted interactively, press enter for `none`. With `s3`, the app also gets `src/lib/s3.ts` (a shared [`@aws-sdk/client-s3`](https://www.npmjs.com/package/@aws-sdk/client-s3) client configured from `S3_*` environment variables, for AWS S3 or any S3-compatible provider), an `s3` service in `docker-compose.yml` running [RustFS](https://rustfs.com) with a `dev-bucket` bucket that `.env.local` points at, `S3_*` entries in `.env.example`, and a `blob-storage` Claude Code skill. |
 
