@@ -39,6 +39,35 @@ describe("API routes and OpenAPI docs", () => {
     });
   });
 
+  it("serves OAuth protected resource metadata (RFC 9728)", () => {
+    cy.request({
+      url: "/.well-known/oauth-protected-resource",
+      failOnStatusCode: false,
+    }).then((response) => {
+      expect(response.headers["access-control-allow-origin"]).to.eq("*");
+      expect(response.headers["content-type"]).to.include("application/json");
+      // 404 while SCHEMAVAULTS_RESOURCE_URL is unset; never a 500
+      // (an invalid resource URL) or Next.js's not-found page.
+      expect(response.status).to.be.oneOf([200, 404]);
+      if (response.status === 404) {
+        expect(response.body.error).to.eq("not_found");
+        return;
+      }
+      expect(response.body.resource).to.be.a("string");
+      expect(response.body.authorization_servers).to.have.length.greaterThan(0);
+      expect(response.body.bearer_methods_supported).to.deep.eq(["header"]);
+      expect(response.body.resource_documentation).to.match(/\/docs$/);
+    });
+    cy.request({
+      method: "OPTIONS",
+      url: "/.well-known/oauth-protected-resource",
+      headers: { "Access-Control-Request-Method": "GET" },
+    }).then((response) => {
+      expect(response.status).to.eq(204);
+      expect(response.headers["access-control-allow-origin"]).to.eq("*");
+    });
+  });
+
   it("serves openapi.json and renders it at /docs", () => {
     cy.request("/openapi.json").then((response) => {
       expect(response.status).to.eq(200);
