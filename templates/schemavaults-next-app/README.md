@@ -91,6 +91,31 @@ ship in `src/app/api/health`, `src/app/api/greet/[name]` and `src/app/api/me`;
 delete them once you have real routes and regenerate. The `api-routes`
 Claude Code skill in `.claude/skills/` documents the full workflow.
 
+### OAuth protected resource metadata
+
+[`/.well-known/oauth-protected-resource`](http://localhost:3000/.well-known/oauth-protected-resource)
+(`src/app/.well-known/oauth-protected-resource/`) serves
+[RFC 9728](https://www.rfc-editor.org/rfc/rfc9728) protected resource metadata.
+OAuth clients that start from nothing but this app's URL (MCP clients, for
+one) read it to find the auth server (`SCHEMAVAULTS_AUTH_SERVER_URL`) and the
+`resource` URL to request access tokens for (`SCHEMAVAULTS_RESOURCE_URL`,
+`http://localhost:3000` in `.env.local`). Protected operations accept tokens
+issued for that URL as well as for `SCHEMAVAULTS_API_SERVER_ID`. While
+`SCHEMAVAULTS_RESOURCE_URL` is unset, the route answers 404.
+
+To publish it from a deployment:
+
+1. Set `SCHEMAVAULTS_RESOURCE_URL` to the app's public `https` URL, e.g.
+   `https://app.example.com`.
+2. On the auth server, register that origin as a domain of the app's API
+   server (`SCHEMAVAULTS_API_SERVER_ID`) for the same environment. Token
+   requests for a URL no API server registered fail with `invalid_target`. If
+   the resource URL has a path (`https://app.example.com/mcp`), also set the
+   API server's resource URL matching to `prefix`.
+3. To serve clients that register themselves (RFC 7591 dynamic client
+   registration, as MCP clients do), allow dynamic clients on the API
+   server's page on the auth server.
+
 ### Database Migrations
 
 This project ships with the `@schemavaults/dbh` `database-migrations` Claude
