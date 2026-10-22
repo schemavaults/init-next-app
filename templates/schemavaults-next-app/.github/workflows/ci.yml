@@ -44,9 +44,38 @@ jobs:
       - name: Build
         run: bun run build
 
-  migrate:
-    needs: build
+  # Jobs can't read secrets in `if:`, so this job checks for the database
+  # credentials @schemavaults/dbh connects with (POSTGRES_URL, or the
+  # POSTGRES_HOST/DATABASE/USER/PASSWORD it builds one from) and `migrate` is
+  # skipped until any of them is a repository secret. A partial set still runs
+  # `migrate`, so dbh fails naming the missing ones.
+  database-credentials:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+
+    steps:
+      - name: Check for database credentials
+        id: check
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+          POSTGRES_HOST: ${{ secrets.POSTGRES_HOST }}
+          POSTGRES_DATABASE: ${{ secrets.POSTGRES_DATABASE }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+        run: |
+          if [ -n "$POSTGRES_URL$POSTGRES_HOST$POSTGRES_DATABASE$POSTGRES_USER$POSTGRES_PASSWORD" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Skipping migrate::No database credentials are set. Add a POSTGRES_URL repository secret (or POSTGRES_HOST, POSTGRES_DATABASE, POSTGRES_USER and POSTGRES_PASSWORD) to run production migrations."
+          fi
+
+  migrate:
+    needs: [build, database-credentials]
+    if: needs.database-credentials.outputs.configured == 'true'
     uses: ./.github/workflows/migrate-production.yml
     secrets: inherit
 

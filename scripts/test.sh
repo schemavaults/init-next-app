@@ -211,6 +211,7 @@ test -f test-app/.github/workflows/migrate-production.yml
 grep -q 'fix/\*' test-app/.github/workflows/ci.yml
 grep -q 'claude/\*' test-app/.github/workflows/ci.yml
 grep -q 'feature/\*' test-app/.github/workflows/ci.yml
+grep -q "needs.database-credentials.outputs.configured == 'true'" test-app/.github/workflows/ci.yml
 
 echo "==> Asserting the @schemavaults/dbh database-migrations Claude skill was installed"
 test -d test-app/.claude

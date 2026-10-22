@@ -135,6 +135,12 @@ bun run migrate:development
 bun run migrate:test
 bun run migrate:production
 ```
+
+On every push to `main`, CI's `migrate` job runs `migrate:production` with the
+`POSTGRES_*` repository secrets (`.github/workflows/migrate-production.yml`).
+It's skipped until `POSTGRES_URL`, or `POSTGRES_HOST`, `POSTGRES_DATABASE`,
+`POSTGRES_USER` and `POSTGRES_PASSWORD`, is set as a repository secret, so an
+app without a production database yet keeps a green CI.
 <!-- mould:if blob_storage == s3 -->
 
 ### Blob Storage (S3)
